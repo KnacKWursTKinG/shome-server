@@ -8,9 +8,9 @@ from mpv.player import player
 
 blueprint = Blueprint('MPV', __name__)
 #logger = ClickLogger(
-#    c.main.get('plugin@mpv', 'log_level'),
+#    c.main.get('plugin@nmpv', 'log_level'),
 #    name='MPV',
-#    _file=c.main.get('plugin@mpv', 'log_file', fallback=None)
+#    _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
 #)
 
 

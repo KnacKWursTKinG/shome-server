@@ -18,8 +18,8 @@
     "log_level": "${shomeserver:log_level}",
     "log_file": "~/.logs/shomeserver.pi_pir_motion.log"
   },
-  "plugin@mpv": {
+  "plugin@nmpv": {
     "log_level": "${shomeserver:log_level}",
-    "log_file": "~/.logs/shomeserver.mpv.log"
+    "log_file": "~/.logs/shomeserver.nmpv.log"
   }
 }
