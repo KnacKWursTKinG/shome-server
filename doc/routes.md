@@ -3,19 +3,17 @@
 
 ## Pi RGB API: *'~/.config/plugins/py_rgb'*
 
-* Server Returns:
-  * Status Code [200]: `json.dumps(dict(...)) or None`
-  * Else: `str(error_message)`
-<br/><br/>
-* Json Data:
+* **Type**: json
+
+* **Data**:
   * __*sections*__: `list[str or int]`
-  * __*rgbw*__: `list[int]`
+  * __*rgbw*__: `Union[tuple[int, int, int], tuple[int, int, int]]`
 
 
  Type | Route | Description | Client | Server
 :----:|:------|:-----------:|:-------|:------
 POST  | /api/pi\_rgb/set | set __*rgbw*__ for __*sections*__  | __*rgbw*__<br/>__*sections*__ | -
-POST  | /api/pi\_rgb/get | get __*rgbw*__ from __*sections*__ | __*sections*__              | `list[rgbw, ...]`<br/>Note: sections[0] = list[0]
+POST  | /api/pi\_rgb/get | get __*rgbw*__ from __*sections*__ | __*sections*__              | `list[`__*rgbw*__`]`
 POST  | /api/pi\_rgb/on  | turn on __*sections*__             | __*sections*__              | -
 POST  | /api/pi\_rgb/off | turn off __*sections*__            | __*sections*__              | -
 
@@ -26,26 +24,21 @@ POST  | /api/pi\_rgb/off | turn off __*sections*__            | __*sections*__  
 > '*https://github.com/jaseg/python-mpv*'
 
 
-# TODO: some examples
-
-# NOTE: just some thoughts here
-* Client to Server: [ data-type: *pickle/bytes* ]
-  * __*func*__: python function
-    * Example:
-    ```Python
-    def play(self):
-      player = self.MPV(ytdl=True)
-      player.play('https://youtu.be/DOmdB7D-pUU')
-      player.wait_for_playback()
-    ```
-  * __*log-level*__: mpv-player log level for __*output*__
+* Client -> Server:
+  * **Type**: pickle/bytes
+  * __*mpv_data*__: `tuple["mpv.MPV attribute name", Optional["args"], Optional["kwargs"]]`
 
 
-* Server to Client: [ data-type: *pickle/bytes* ]
-  * __*return*__: *func* return
-  * __*output*__: mpv-player *output* if available
+* Server -> Client:
+  * **Type**: pickle/bytes
+  * __*return*__: `Any`
 
 
  Type | Route | Description | Client | Server
 :----:|:------|:-----------:|:-------|:------
-POST  | /api/mrav/ | python-mpv control | __*func*__ | __*return*__<br/>__*output*__
+POST  | /api/mrav/ | python-mpv control | __*mpv_data*__ | __*return*__
+
+
+### Examples
+
+__*@TODO* ...__
