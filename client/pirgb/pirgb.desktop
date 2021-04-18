@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=PiRGB
+Exec=python -m pirgb --log-level info gui --gui qt
+Icon=pirgb
+Type=Application
+Terminal=false

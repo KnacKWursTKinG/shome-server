@@ -1,0 +1,123 @@
+body {
+  margin: 0;
+}
+
+.screen {
+  display: flex;
+  position: fixed;
+  flex-direction: column;
+
+  width: var(--screen-width);
+  height: var(--screen-height);
+
+  z-index: 0;
+}
+
+.screen .main {
+  /* NOTE:
+    * Sections:
+      * buttons in order top->bottom or if landscape
+      * top-bottom (50%width) && left->right
+  */
+  display: inline-flex;
+  flex-direction: column;
+
+  overflow-y: auto;
+
+  width: var(--main-width);
+  height: var(--main-height);
+
+  background-color: var(--main-bg-color);
+}
+
+.screen .main .control-element {
+  display: inline-flex;
+  flex-direction: row;
+
+  height: 50px;
+  width: calc(100% - 6px);
+
+  margin-left: 3px;
+  margin-right: 3px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+
+.screen .main .control-element .label {
+  display: inherit;
+  flex-direction: inherit;
+
+  justify-content: center;
+  align-items: center;
+
+  width: 70%;
+
+  border-style: double;
+  border-color: var(--border-color);
+
+  margin-right: 3px;
+
+  background-color: var(--power-label-bg);
+}
+
+.screen .main .control-element .power {
+  display: inherit;
+  flex-direction: inherit;
+
+  width: 30%;
+}
+
+.screen .main .control-element .button {
+  display: inherit;
+  justify-content: center;
+  align-items: center;
+
+  width: 50%;
+}
+
+.screen .main .control-element .on {
+  background-color: var(--power-disabled);
+
+  margin-right: 3px;
+}
+
+.screen .main .control-element .off {
+  background-color: var(--power-disabled);
+
+  margin-right: 3px;
+}
+
+.screen .main .control-element .button.offline {
+  border-style: ridge;
+  border-color: var(--border-color);
+  border-width: 2px;
+}
+
+.screen .main .control-element .uncheck {
+  border-style: outset;
+  border-color: var(--border-color);
+  border-width: 5px;
+}
+
+.screen .main .control-element .check {
+  border-style: inset;
+  border-color: var(--border-color);
+  border-width: 5px;
+}
+
+.screen .main .control-element .uncheck.on {
+  background-color: var(--power-button-on-uncheck);
+}
+
+.screen .main .control-element .uncheck.off {
+  background-color: var(--power-button-off-uncheck);
+}
+
+.screen .main .control-element .check.on {
+  background-color: var(--power-button-on);
+}
+
+.screen .main .control-element .check.off {
+  background-color: var(--power-button-off);
+  /* ... */
+}

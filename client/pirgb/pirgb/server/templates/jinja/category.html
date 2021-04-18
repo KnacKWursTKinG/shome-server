@@ -1,0 +1,9 @@
+{% for id, label, category in data %}
+  <div id="{{ id }}" class="{{ category  }} control-element">
+    <div class="setup label">{{ label }}</div>
+    <div class="power">
+      <div class="button toggle on offline">ON</div>
+      <div class="button toggle off offline">OFF</div>
+    </div>
+  </div>
+{% endfor %}

@@ -1,0 +1,15 @@
+{
+    "name": "pirgb.knackwurstking",
+    "description": "flask app for controlling the shomeserver pi_rgb plugin",
+    "architecture": "@CLICK_ARCH@",
+    "title": "Pi RGB",
+    "hooks": {
+        "pirgb": {
+            "apparmor": "pirgb.apparmor",
+            "desktop":  "pirgb.desktop"
+        }
+    },
+    "version": "0.1.0",
+    "maintainer": "Udo Bauer <knackwurstking.tux@gmail.com>",
+    "framework" : "@CLICK_FRAMEWORK@"
+}

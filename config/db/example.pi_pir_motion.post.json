@@ -1,0 +1,10 @@
+{
+  "pi-bath": {
+    "onmotion": "`which pirgb 2>&1 && pirgb cli --pi pi-bath on || exit 0`",
+    "ontimeout": "`which pirgb 2>&1 && pirgb cli --pi pi-bath off || exit 0`",
+    "timeout": 120,
+    "reuse": "${timeout}",
+    "gpio": 21,
+    "step": 0.5
+  }
+}

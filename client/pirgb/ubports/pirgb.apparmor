@@ -1,0 +1,9 @@
+{
+    "template": "unconfined",
+    "policy_groups": [
+        "webview",
+        "audio",
+        "networking"
+    ],
+    "policy_version": 16.04
+}
