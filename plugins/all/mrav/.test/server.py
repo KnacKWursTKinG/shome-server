@@ -6,7 +6,7 @@ import pickle
 import types
 import typing
 
-from mpv import MPV, ShutdownError
+from mpv import MPV
 
 from kwking_helper import thread
 
