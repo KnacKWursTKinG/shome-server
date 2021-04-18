@@ -2,5 +2,4 @@ __pycache__/
 build/
 dist/
 .ropeproject/
-#plugins/all/mrav/.test/
-plugins/all/mrav/.test/*mp4
+*mp4

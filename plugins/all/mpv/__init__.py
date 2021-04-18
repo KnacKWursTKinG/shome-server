@@ -5,7 +5,7 @@ Github: 'https://github.com/jaseg/python-mpv'
 
 from kwking_helper import c
 
-if 'plugin@mrav' not in c.main.sections():
+if 'plugin@mpv' not in c.main.sections():
     # load default/fallback config
     c.read(__file__.rsplit('/', 1)[0] + '/config.ini')
 
