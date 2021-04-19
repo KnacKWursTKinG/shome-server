@@ -99,12 +99,10 @@ def pi_command(command: str):
         _t.join()
 
         if _t.err:
-            return make_response(f"pirgb: {command}: {_t.err!r}", 500)
+            raise Exception(f"pirgb: {command}: {_t.err!r}")
 
         if _t.ret and command == 'get':
             _get_return.extend(_t.ret)
-
-        return None
 
     try:
         hosts = get_hosts_for_group(rdata.pop('id'))
@@ -130,8 +128,8 @@ def pi_command(command: str):
     for _t in threads:
         _t.join()
 
-        if _t.ret:
-            return _t.ret
+        if _t.err:
+            return make_response(_t.err, 500)
 
     logger.debug(f"['/pi/{command}'] {_get_return=}")
     return make_response(jsonify(_get_return or None), 200)
