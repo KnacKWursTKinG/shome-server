@@ -3,15 +3,10 @@ from flask import Blueprint, request, make_response, Response
 
 from kwking_helper import c
 
-from mpv.player import player
+from nmpv.player import player
 
 
 blueprint = Blueprint('MPV', __name__)
-#logger = ClickLogger(
-#    c.main.get('plugin@nmpv', 'log_level'),
-#    name='MPV',
-#    _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
-#)
 
 
 @blueprint.route('/', methods=['POST'])
@@ -20,6 +15,7 @@ def index():
 
     if 'data/bytes' in request.headers.get('Content-Type'):
         _t = player(request.data)
+        _t.join()
 
         if _t.err:
             # TODO find the correct status code here (500?)
