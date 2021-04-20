@@ -62,7 +62,7 @@ class Motion(Process):
                     self.timeout = time.time() + TIMEOUT
 
                 if REUSE is not None:
-                    if time.time() > reuse:
+                    if time.time() > reuse and REUSE != 0 and not _thread.is_alive():
                         # run 'onmotion' command
                         self.logger.info(
                             (
