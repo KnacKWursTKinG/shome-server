@@ -5,10 +5,30 @@ import pickle
 import socket
 
 from typing import Optional, Union
+from flask import Flask
 
 import requests
 
 from kwking_helper import rq, thread
+
+
+class StreamRoute:
+    def __init__(self, name: str):
+        self.server = Flask(name)
+
+    @thread(True)
+    def run(self, host: str = 'localhost', port: int = 0, debug: bool = False):
+        self.server.run(host=host, port=port, debug=debug)
+
+    def new(self, filename):
+        def stream():
+            pass
+
+        self.server.add_url_rule(
+            ..., # route
+            ..., # endpoint name
+            stream  # func
+        )
 
 
 class _Base:
@@ -61,7 +81,7 @@ class Playlist(_Base):
         except Exception:
             self.__thread = self.__refresh()
 
-    @thread(True, 'critical')
+    @thread(True)
     def __refresh(self):
         self.__cache = self.command('playlist')
 
