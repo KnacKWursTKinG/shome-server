@@ -63,7 +63,7 @@ class Motion(Process):
 
                 if REUSE is not None:
                     if time.time() > reuse:
-                        if (REUSE == 0) and _thread.is_alive():
+                        if (REUSE == 0) and not _thread.is_alive():
                             # run 'onmotion' command
                             self.logger.info(
                                 (
