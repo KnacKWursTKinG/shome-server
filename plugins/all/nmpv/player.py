@@ -17,6 +17,13 @@ logger = ClickLogger(
     _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
 )
 
+mpv_logger = ClickLogger(
+    c.main.get('plugin@nmpv', 'mpv_log_level',
+               fallback=c.main.get('plugin@nmpv', 'log_level')),
+    name='MPV: mpv',
+    _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
+)
+
 PLAYER: mpv.MPV = None
 
 try:
@@ -26,6 +33,21 @@ try:
 except AttributeError:
     logger.warning(f"no mpv configuration found for {socket.gethostname()!r}")
     DEFAULT_PLAYER_ARGS = dict()
+
+
+def mpv_logger_handler(level: str, component: str, message: str):
+    if level in ['v', 'debug']:
+        mpv_logger.debug(f"[{component}] {message}")
+    elif level == 'info':
+        mpv_logger.info(f"[{component}] {message}")
+    elif level == 'warn':
+        mpv_logger.warning(f"[{component}] {message}")
+    elif level == 'error':
+        mpv_logger.error(f"[{component}] {message}")
+    elif level == 'critical':
+        mpv_logger.info(f"[{component}] {message}")
+    else:
+        logger.critical(f"MPV LOGGER: unknown {level=}")
 
 
 @thread(
@@ -63,7 +85,7 @@ def player(data: bytes):
 
     if PLAYER is None:
         logger.debug(f"init mpv.MPV({default_player_args=})")
-        PLAYER = mpv.MPV(**default_player_args)
+        PLAYER = mpv.MPV(log_handler=mpv_logger_handler, loglevel='debug', **default_player_args)
 
     if attr != 'new':
         attr = getattr(PLAYER, attr)
@@ -71,6 +93,7 @@ def player(data: bytes):
 
         if isinstance(attr, types.MethodType):
             logger.debug(f"run {attr=}")
+            logger.debug(f"{args=}, {kwargs=}")
             _return = attr(
                 *args, **kwargs
             )
