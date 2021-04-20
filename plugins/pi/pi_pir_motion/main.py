@@ -62,19 +62,20 @@ class Motion(Process):
                     self.timeout = time.time() + TIMEOUT
 
                 if REUSE is not None:
-                    if time.time() > reuse and (REUSE != 0 and not _thread.is_alive()):
-                        # run 'onmotion' command
-                        self.logger.info(
-                            (
-                                f"[{time.time()}] onmotion:\n"
-                                f"{c.pi_pir_motion.get(HOSTNAME, 'onmotion')}"
+                    if time.time() > reuse:
+                        if (REUSE == 0) and _thread.is_alive():
+                            # run 'onmotion' command
+                            self.logger.info(
+                                (
+                                    f"[{time.time()}] onmotion:\n"
+                                    f"{c.pi_pir_motion.get(HOSTNAME, 'onmotion')}"
+                                )
                             )
-                        )
-                        # start timeout method
-                        if TIMEOUT is not None and not _thread.is_alive():
-                            _thread = self.wait_for_timeout()
+                            # start timeout method
+                            if TIMEOUT is not None and not _thread.is_alive():
+                                _thread = self.wait_for_timeout()
 
-                        reuse = time.time() + REUSE
+                            reuse = time.time() + REUSE
                 else:
                     # run 'onmotion' command
                     self.logger.info(
