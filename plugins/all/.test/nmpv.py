@@ -4,31 +4,13 @@ import os
 import pickle
 import socket
 
+from multiprocessing import Process
 from typing import Optional, Union
 from flask import Flask
 
 import requests
 
 from kwking_helper import rq, thread
-
-
-class StreamRoute:
-    def __init__(self, name: str):
-        self.server = Flask(name)
-
-    @thread(True)
-    def run(self, host: str = 'localhost', port: int = 0, debug: bool = False):
-        self.server.run(host=host, port=port, debug=debug)
-
-    def new(self, filename):
-        def stream():
-            pass
-
-        self.server.add_url_rule(
-            ..., # route
-            ..., # endpoint name
-            stream  # func
-        )
 
 
 class _Base:
@@ -49,6 +31,38 @@ class _Base:
             return pickle.loads(r.content)
 
         raise rq.RQError(r)
+
+
+class StreamRoute(_Base):
+    def __init__(self, name: str, host: str = 'localhost', port: int = 50870):
+        super().__init__(host, port)
+        self.server = Flask(name)
+        self.process = Process()
+
+    def run(self, host: str = 'localhost', port: int = 0, debug: bool = False):
+        if self.process.is_alive():
+            return
+
+        self.process = Process(
+            target=self.server.run,
+            args=(),
+            kwargs=dict(host=host, port=port, debug=debug)
+        )
+
+    # TODO ...
+    def start(self):
+        """ generate port, start process, send play command """
+
+    # TODO ...
+    def new(self, filename):
+        def stream():  # generator
+            pass
+
+        self.server.add_url_rule(
+            ..., # route
+            ..., # endpoint name
+            stream  # func
+        )
 
 
 class Playlist(_Base):
@@ -103,6 +117,10 @@ class Player(_Base):
     def play(self, filename: str):
         self.command('play', os.path.abspath(filename))
         self.playlist.refresh()
+
+    # TODO: ...
+    def stream(self, handler: StreamRoute):
+        ...
 
     @property
     def playlist(self):
