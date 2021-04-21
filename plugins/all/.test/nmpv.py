@@ -3,17 +3,19 @@
 import os
 import pickle
 import socket
+import mimetypes
 
 from multiprocessing import Process
 from typing import Optional, Union
-from flask import Flask
 
 import requests
+
+from flask import Flask, Response
 
 from kwking_helper import rq, thread
 
 
-class _Base:
+class Base:
     def __init__(self, host: str, port: int):
         self._host = socket.gethostbyname(host)
         self._port = int(port)
@@ -33,39 +35,7 @@ class _Base:
         raise rq.RQError(r)
 
 
-class StreamRoute(_Base):
-    def __init__(self, name: str, host: str = 'localhost', port: int = 50870):
-        super().__init__(host, port)
-        self.server = Flask(name)
-        self.process = Process()
-
-    def run(self, host: str = 'localhost', port: int = 0, debug: bool = False):
-        if self.process.is_alive():
-            return
-
-        self.process = Process(
-            target=self.server.run,
-            args=(),
-            kwargs=dict(host=host, port=port, debug=debug)
-        )
-
-    # TODO ...
-    def start(self):
-        """ generate port, start process, send play command """
-
-    # TODO ...
-    def new(self, filename):
-        def stream():  # generator
-            pass
-
-        self.server.add_url_rule(
-            ..., # route
-            ..., # endpoint name
-            stream  # func
-        )
-
-
-class Playlist(_Base):
+class Playlist(Base):
     def __init__(self, host: str, port: int = 50870):
         super().__init__(host, port)
         self.__cache: list[dict[str, Union[str, int, bool]]] = list()
@@ -105,7 +75,7 @@ class Playlist(_Base):
         self.refresh()
 
 
-class Player(_Base):
+class Player(Base):
     def __init__(self, host: str, port: int = 50870, playlist: bool = True):
         super().__init__(host, port)
         self.__playlist: Optional[Playlist] = Playlist(host, port) if playlist else None
@@ -114,14 +84,71 @@ class Player(_Base):
         self.command('new', **player_args)
         self.playlist.refresh()
 
-    def play(self, filename: str):
-        self.command('play', os.path.abspath(filename))
+    def play(self, file: str):
+        self.command('play', file)
         self.playlist.refresh()
 
-    # TODO: ...
-    def stream(self, handler: StreamRoute):
-        ...
+    def stream(self, file: str):
+        stream = Stream(self._host, file)
+        stream.start()
+        self.play(stream.url)
 
     @property
     def playlist(self):
         return self.__playlist
+
+
+class Stream(Process):
+    Queue: list[Process] = list()
+
+    def __init__(self, host: str, file: str):
+        super().__init__()
+        self.daemon = True
+
+        self.file = os.path.expanduser(file)
+
+        if not os.path.isfile(self.file):
+            raise FileNotFoundError(self.file)
+
+        self.mimetype = mimetypes.guess_type(self.file)[0]
+        self.rule = f"/{id(self.file)}"
+        self.endpoint = 'stream'
+
+        self.port = 0
+        self.host = host
+        self.server = Flask(self.endpoint)
+
+        self.gen_port()
+
+    @property
+    def url(self):
+        return f"http://{self.host}:{self.port}{self.rule}"
+
+    def start(self):
+        Stream.Queue.append(self)
+        super().start()
+
+    def run(self):
+        def stream():
+            def gen_from_file():
+                with open(self.file, 'rb') as f:
+                    while (data := f.read(1024*1024)):
+                        yield data
+
+            return Response(
+                gen_from_file(), mimetype=self.mimetype
+            )
+
+        self.server.add_url_rule(
+            rule=self.rule,
+            endpoint=self.endpoint,
+            view_func=stream
+        )
+
+        self.server.run(self.host, port=self.port)
+
+    def gen_port(self):
+        with socket.create_server(('localhost', 0)) as s:
+            self.port = s.getsockname()[1]
+
+        return self.port
