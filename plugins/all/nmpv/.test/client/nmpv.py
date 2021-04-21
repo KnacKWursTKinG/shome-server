@@ -6,13 +6,14 @@ import socket
 import mimetypes
 
 from multiprocessing import Process
+from threading import Thread
 from typing import Optional, Union
 
 import requests
 
 from flask import Flask, Response
 
-from kwking_helper import rq, thread
+from kwking_helper import rq
 
 
 class Base:
@@ -63,9 +64,9 @@ class Playlist(Base):
             if self.__thread.is_alive():
                 return
         except Exception:
-            self.__thread = self.__refresh()
+            self.__thread = Thread(name=f"playlist-refresh-{id(self)}", target=self.__refresh)
+            self.__thread.start()
 
-    @thread(True)
     def __refresh(self):
         self.__cache = self.command('playlist')
 
@@ -104,6 +105,7 @@ class Stream(Process):
     def __init__(self, host: str, file: str):
         super().__init__()
         self.daemon = True
+        self.name = f"stream-{id(self)}"
 
         self.file = os.path.expanduser(file)
 

@@ -30,7 +30,7 @@ class PiRGB():
         )
 
         if not r:
-            raise rq.RQError(f"{r!r}: {r.text}")
+            raise rq.RQError(r)
 
     @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
     def off(self, sections: list[Union[str, int]]):
@@ -44,7 +44,7 @@ class PiRGB():
         )
 
         if not r:
-            raise rq.RQError(r.status_code, r.text)
+            raise rq.RQError(r)
 
     @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
     def get(self, sections: list[Union[str, int]]) -> list[list[int]]:
@@ -60,7 +60,7 @@ class PiRGB():
         if r:
             return json.loads(r.text)
 
-        raise rq.RQError(r.status_code, r.text)
+        raise rq.RQError(r)
 
     @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
     def set(self, sections: list[Union[str, int]], rgbw: Union[tuple[int, ...], list[int]]):
@@ -75,7 +75,7 @@ class PiRGB():
         )
 
         if not r:
-            raise rq.RQError(r.status_code, r.text)
+            raise rq.RQError(r)
 
     @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
     def bright(self, sections: list[Union[str, int]], bright: int, _calc: str = None):

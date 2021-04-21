@@ -28,6 +28,7 @@ class Player(Thread):
     def __init__(self, attr, *args, **kwargs):
         super().__init__()
         self.daemon = True
+        self.name = f"player-{id(self)}"
 
         self.mpv_attr = {
             'new': self.mpv_init
