@@ -1,31 +1,36 @@
 
-from flask import Blueprint, request, make_response, Response
+import pickle
+
+from flask import Blueprint, request, Response
 
 from kwking_helper import c
 
-from nmpv.player import player
+from nmpv.player import Player
 
 
 blueprint = Blueprint('MPV', __name__)
 
 
-@blueprint.route('/', methods=['POST'])
+@blueprint.route('/player', methods=['POST'])
 def index():
-    _return: Response
+    response: Response
 
     if 'data/bytes' in request.headers.get('Content-Type'):
-        _t = player(request.data)
-        _t.join()
+        player = Player(*pickle.loads(request.data))
+        player.start()
+        player.join()
 
-        if _t.err:
-            # TODO find the correct status code here (500?)
-            _return = make_response(f"{_t.err!r}", 500)
+        if player._error:
+            response = Response(f"{player._error!r}", status=500, mimetype='text/text')
         else:
-            _return = make_response(
-                _t.ret, 200,
-                {'Content-Type': 'data/bytes'}
+            response = Response(
+                pickle.dumps(player._return),
+                mimetype='data/bytes'
             )
-    else:
-        _return = make_response("no data", 400)
 
-    return _return
+        del player
+
+    else:
+        response = Response(status=400)
+
+    return response

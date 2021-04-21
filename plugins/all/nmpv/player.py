@@ -1,107 +1,110 @@
 
+from __future__ import annotations
+
 import pickle
 import socket
 import types
 import json
 
+from threading import Thread
 from typing import Union, Optional, Any
 
 import mpv
 
-from kwking_helper import c, thread, ClickLogger
+from kwking_helper import c, ClickLogger
 
 
-logger = ClickLogger(
-    c.main.get('plugin@nmpv', 'log_level'),
-    name='MPV: player',
-    _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
-)
+class Player(Thread):
+    Queue: set[Player] = set()
+    MPV: mpv.MPV = None
 
-mpv_logger = ClickLogger(
-    c.main.get('plugin@nmpv', 'mpv_log_level',
-               fallback=c.main.get('plugin@nmpv', 'log_level')),
-    name='MPV: mpv',
-    _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
-)
+    try:
+        PLAYER_ARGS = json.loads(
+            c.mpv._sections.get(socket.gethostname(), '{}')
+        )
+    except AttributeError:
+        PLAYER_ARGS = dict()
 
-PLAYER: mpv.MPV = None
+    def __init__(self, attr, *args, **kwargs):
+        super().__init__()
+        self.daemon = True
 
-try:
-    DEFAULT_PLAYER_ARGS = json.loads(
-        c.mpv._sections.get(socket.gethostname(), '{}')
-    )
-except AttributeError:
-    logger.warning(f"no mpv configuration found for {socket.gethostname()!r}")
-    DEFAULT_PLAYER_ARGS = dict()
+        self.mpv_attr = {
+            'new': self.mpv_init
+        }
 
+        self._attr = attr
+        self._args = args
+        self._kwargs = kwargs
 
-def mpv_logger_handler(level: str, component: str, message: str):
-    if level in ['v', 'debug']:
-        mpv_logger.debug(f"[{component}] {message}")
-    elif level == 'info':
-        mpv_logger.info(f"[{component}] {message}")
-    elif level == 'warn':
-        mpv_logger.warning(f"[{component}] {message}")
-    elif level == 'error':
-        mpv_logger.error(f"[{component}] {message}")
-    elif level == 'critical':
-        mpv_logger.info(f"[{component}] {message}")
-    else:
-        logger.critical(f"MPV LOGGER: unknown {level=}")
+        self.logger = ClickLogger(
+            c.main.get('plugin@nmpv', 'log_level'),
+            name='MPV: Player',
+            _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
+        )
 
+        self._error = None
+        self._return = None
 
-@thread(
-    daemon=True,
-    log_level=c.main.get('plugin@nmpv', 'log_level', fallback='warning')
-)
-def player(data: bytes):
-    global PLAYER
+        Player.Queue.add(self)
 
-    attr: Union[str, Any]
-    args: tuple[Any]
-    kwargs: dict[str, Any]
+    def __del__(self):
+        Player.Queue.remove(self)
 
-    _return: Any = None
-    default_player_args = DEFAULT_PLAYER_ARGS
-
-    attr, args, kwargs = pickle.loads(data)
-
-    if attr == 'new':
-        # quit PLAYER if not None and del + set to None
-        if PLAYER is not None:
-            logger.debug('terminate existing player')
-            PLAYER.quit(0)
-            PLAYER.terminate()
-            del PLAYER
-            PLAYER = None
-
-        # get player args
-        if isinstance(kwargs, dict) and kwargs:
-            logger.debug(f"set custom player args {kwargs=}")
-            default_player_args = {
-                **default_player_args,
-                **kwargs
-            }
-
-    if PLAYER is None:
-        logger.debug(f"init mpv.MPV({default_player_args=})")
-        PLAYER = mpv.MPV(log_handler=mpv_logger_handler, loglevel='debug', **default_player_args)
-
-    if attr != 'new':
-        attr = getattr(PLAYER, attr)
-        logger.debug(f"{type(attr)=}")
-
-        if isinstance(attr, types.MethodType):
-            logger.debug(f"run {attr=}")
-            logger.debug(f"{args=}, {kwargs=}")
-            _return = attr(
-                *args, **kwargs
-            )
-
+    def mpv_logger(self, level: str, component: str, message: str):
+        if level in ['v', 'debug']:
+            self.logger.debug(f"[{component}] {message}")
+        elif level == 'info':
+            self.logger.info(f"[{component}] {message}")
+        elif level == 'warn':
+            self.logger.warning(f"[{component}] {message}")
+        elif level == 'error':
+            self.logger.error(f"[{component}] {message}")
+        elif level == 'critical':
+            self.logger.info(f"[{component}] {message}")
         else:
-            logger.debug(f"get {attr=}")
-            _return = attr
+            self.logger.warning(f"MPV LOGGER: unknown {level=}")
 
-    logger.debug(f"return: {_return=}")
+    def mpv_init(self, *extra_mpv_flags, **player_args):
+        if isinstance(Player.MPV, mpv.MPV):
+            self.logger.debug("quit existing player")
+            _mpv = Player.MPV
+            _mpv.quit(0)
+            _mpv.terminate()
+            del _mpv
 
-    return pickle.dumps(_return)
+        Player.MPV = mpv.MPV(
+            *extra_mpv_flags,
+            log_handler=self.mpv_logger, loglevel='debug',
+            **player_args
+        )
+
+    def run(self):
+        try:
+            if self._attr in self.mpv_attr:
+                attr = self.mpv_attr[self._attr]
+
+            else:
+                if Player.MPV is not None:
+                    self.mpv_init()
+
+                try:
+                    attr = getattr(Player.MPV, self._attr)
+
+                except AttributeError as ex:
+                    self._error = ex
+                    self.logger.error(f"{attr!r} not found")
+                    return
+
+            self.logger.debug(f"[{self._attr}] got {attr=} (type: {type(attr)})")
+
+            if isinstance(attr, types.MethodType):
+                self._return = attr(*self._args, **self._kwargs)
+
+            else:
+                self._return = attr
+
+        except Exception as ex:
+            self._error = ex
+            self.logger.error(f"{ex!r}")
+            return

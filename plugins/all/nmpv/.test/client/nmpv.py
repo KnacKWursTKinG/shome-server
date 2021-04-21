@@ -22,7 +22,7 @@ class Base:
 
     def command(self, attr: str, *args, **kwargs):
         r = requests.post(
-            f"http://{self._host}:{self._port}/api/nmpv/",
+            f"http://{self._host}:{self._port}/api/nmpv/player",
             data=pickle.dumps((str(attr), args, kwargs)),
             headers={
                 'Content-Type': 'data/bytes'
@@ -99,7 +99,7 @@ class Player(Base):
 
 
 class Stream(Process):
-    Queue: list[Process] = list()
+    Queue: set[Process] = set()
 
     def __init__(self, host: str, file: str):
         super().__init__()
@@ -120,13 +120,14 @@ class Stream(Process):
 
         self.gen_port()
 
+        Stream.Queue.add(self)
+
+    def __del__(self):
+        Stream.Queue.remove(self)
+
     @property
     def url(self):
         return f"http://{self.host}:{self.port}{self.rule}"
-
-    def start(self):
-        Stream.Queue.append(self)
-        super().start()
 
     def run(self):
         def stream():
