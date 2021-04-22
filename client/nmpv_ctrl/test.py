@@ -97,8 +97,12 @@ class Test002Playlist(unittest.TestCase):
         pl.reload()
 
         pl.pause = True
+
+        assert pl.pos == -1, f"{pl.pos!r}"
+
         pl.pos = 0
 
+        assert pl.pos == 0, f"{pl.pos!r}"
         assert pl.pause is True, f"{pl.pause!r}"
 
         pl.pause = False
