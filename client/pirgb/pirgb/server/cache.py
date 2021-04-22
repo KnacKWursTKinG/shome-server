@@ -59,7 +59,7 @@ class Cache:
         with Cache.thread_lock:
             return Cache._cache
 
-    @thread(daemon=False, log_level=c.main.get('pirgb', 'log_level'))
+    @thread(daemon=False)
     def load(self):
         # <<- loading data from dbserver and cache
         updated = False
@@ -105,7 +105,7 @@ class Cache:
             self.save()
         # ->>
 
-    @thread(daemon=False, log_level=c.main.get('pirgb', 'log_level'))
+    @thread(daemon=False)
     def save(self, skip_cache: bool = False):
         # <<- Save to db and cache
         if c.main.getboolean('pirgb', 'use_db_config') and self.db:

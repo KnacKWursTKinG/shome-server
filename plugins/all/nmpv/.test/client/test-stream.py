@@ -2,8 +2,6 @@
 
 import os
 
-from pprint import pprint
-
 from kwking_helper import rq
 
 from client import Player
@@ -13,19 +11,20 @@ host = 'pc'
 
 player = Player(host)
 
-player.new(ytdl=True)
+if not player.playlist.cache:
+    player.new(ytdl=True)
 
 stream = player.stream(file)
 stream.start()
 
-if not player.playlist:
-    print("play {file!r} on {host!r}")
+if not player.playlist.cache:
+    print(f"play {stream.url!r} on {host!r}")
     player.play(stream.url)
 else:
-    print("append {file!r} to playlist on {host!r}")
+    print(f"append {stream.url!r} to playlist on {host!r}")
     player.playlist.append(stream.url)
+
+print(str(player.playlist))
 
 stream.join()
 del stream
-
-pprint(player.playlist)

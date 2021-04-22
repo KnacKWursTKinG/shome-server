@@ -93,7 +93,7 @@ class Motion(Process):
 
             time.sleep(5)
 
-    @thread(daemon=True, log_level=c.main.get('plugin@pi_pir_motion', 'log_level'))
+    @thread(daemon=True)
     def wait_for_timeout(self):
         self.logger.debug("waiting for timeout [thread START]")
 

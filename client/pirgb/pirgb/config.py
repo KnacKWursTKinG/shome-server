@@ -40,7 +40,7 @@ c.read([
 ])
 
 
-@thread(daemon=True, log_level=c.main.get('pirgb', 'log_level', fallback='critical'))
+@thread(daemon=True)
 def load_from_db():
     if not c.main.getboolean('pirgb', 'use_db_config'):
         return

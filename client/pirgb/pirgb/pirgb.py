@@ -18,7 +18,7 @@ class PiRGB():
         self.url = f"http://{self.host}:{self.port}/api"
         self.timeout = 5
 
-    @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
+    @thread(daemon=True)
     def on(self, sections: list[Union[str, int]]):
         sections = list(set(map(str, sections)))
         r = requests.post(
@@ -32,7 +32,7 @@ class PiRGB():
         if not r:
             raise rq.RQError(r)
 
-    @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
+    @thread(daemon=True)
     def off(self, sections: list[Union[str, int]]):
         sections = list(set(map(str, sections)))
         r = requests.post(
@@ -46,7 +46,7 @@ class PiRGB():
         if not r:
             raise rq.RQError(r)
 
-    @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
+    @thread(daemon=True)
     def get(self, sections: list[Union[str, int]]) -> list[list[int]]:
         sections = list(set(map(str, sections)))
         r = requests.post(
@@ -62,7 +62,7 @@ class PiRGB():
 
         raise rq.RQError(r)
 
-    @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
+    @thread(daemon=True)
     def set(self, sections: list[Union[str, int]], rgbw: Union[tuple[int, ...], list[int]]):
         sections = list(set(map(str, sections)))
         r = requests.post(
@@ -77,7 +77,7 @@ class PiRGB():
         if not r:
             raise rq.RQError(r)
 
-    @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
+    @thread(daemon=True)
     def bright(self, sections: list[Union[str, int]], bright: int, _calc: str = None):
         sections = list(map(str, sections))
         threads = list()

@@ -1,6 +1,7 @@
 import os
 import sys
 import pickle
+import json
 import time
 import socket
 import mimetypes
@@ -49,15 +50,27 @@ class Playlist(Base):
         for _ in self.__cache:
             yield _
 
-    def __repr__(self):
-        self.thread.join()
-
-        return f"{self.__cache!r}"
-
     def __str__(self):
         self.thread.join()
 
-        return '\n'.join(map(str, self.__cache))
+        return json.dumps(self.__cache, indent=2)
+
+    @property
+    def cache(self):
+        pass
+
+    @cache.getter
+    def cache(self):
+        self.thread.join()
+        return self.__cache
+
+    @cache.setter
+    def cache(self, _):
+        pass
+
+    def __len__(self):
+        self.thread.join()
+        return len(self.__cache)
 
     def refresh(self):
         """ load playlist """
@@ -75,6 +88,7 @@ class Playlist(Base):
         """ append filename/url to playlist """
         self.command('playlist_append', file)
         self.refresh()
+
 
 
 class Stream(Process):

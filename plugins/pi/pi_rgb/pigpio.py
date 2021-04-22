@@ -91,7 +91,7 @@ class PigpioHandler(Cache):
         del self.pi
         self.pi = pigpio.pi()
 
-    @thread(daemon=False, log_level=c.main.get('plugin@pi_rgb', 'log_level'))
+    @thread(daemon=False)
     def _set_range(self):
         for section, gpios in c.dict('pi_rgb').get(socket.gethostname(), {}).items():
             self.log.debug(f"set range for section '{section}' to {self._range}")
@@ -100,7 +100,7 @@ class PigpioHandler(Cache):
             for gpio in json.loads(gpios):
                 self.pi.set_PWM_range(int(gpio), self._range)
 
-    @thread(daemon=False, log_level=c.main.get('plugin@pi_rgb', 'log_level'))
+    @thread(daemon=False)
     def set_dutycycle(self, section: Union[str, int], rgbw: list[int]) -> None:
         self.log.debug(f"set rgbw ({rgbw=}) for {section=}")
 
@@ -122,7 +122,7 @@ class PigpioHandler(Cache):
 
         self.cache(section, revert_rgbw(rgbw, self._range))
 
-    @thread(daemon=False, log_level=c.main.get('plugin@pi_rgb', 'log_level'))
+    @thread(daemon=False)
     def get_dutycycle(self, section: Union[str, int]) -> list[int]:
         self.log.debug(f"get rgbw from {section=}")
 

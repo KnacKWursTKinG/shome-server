@@ -18,7 +18,7 @@ DEFAULTS = {
 }
 
 
-@thread(daemon=False, log_level="debug")
+@thread(daemon=False)
 def run(_conn, _addr, data: bytes):
     global Player
 

@@ -94,7 +94,7 @@ def pi_command(command: str):
     rdata = request.get_json()
     _get_return: list[list[int]] = list()
 
-    @thread(daemon=True, log_level=c.main.get('pirgb', 'log_level'))
+    @thread(daemon=True)
     def _t_check(_t):
         _t.join()
 
@@ -130,6 +130,8 @@ def pi_command(command: str):
 
         if _t.err:
             return make_response(_t.err, 500)
+
+        del _t
 
     logger.debug(f"['/pi/{command}'] {_get_return=}")
     return make_response(jsonify(_get_return or None), 200)
