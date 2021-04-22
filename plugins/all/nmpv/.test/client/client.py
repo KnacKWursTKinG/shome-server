@@ -171,6 +171,11 @@ class Player(Base):
     def stream(self, file: str) -> Stream:
         return Stream(self._host, file)
 
+    def quit(self):  # TODO test
+        self.command('quit', 0)
+        self.command('terminate')
+        self.playlist.refresh()
+
     @property
     def playlist(self) -> Playlist:
         return self.__playlist
