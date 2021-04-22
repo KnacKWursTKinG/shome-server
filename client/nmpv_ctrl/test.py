@@ -1,4 +1,6 @@
 
+import os
+import time
 import socket
 import unittest
 
@@ -22,7 +24,7 @@ class Test001CTRL(unittest.TestCase):
         assert isinstance(ctrl.port, int), f"{ctrl.port=}"
         assert ctrl.name == 'nmpv', f"{ctrl.name=}"
 
-        #self.assertRaises(socket.gaierror, CTRL, 'unknown-host')
+        self.assertRaises(socket.gaierror, CTRL, 'unknown-host')
 
         assert ctrl.url == f"http://{ctrl.host}:{ctrl.port}/api/nmpv/player", f"{ctrl.url=}"
 
@@ -58,15 +60,58 @@ class Test002Playlist(unittest.TestCase):
         print()
         pl = Playlist(HOST, str(PORT), log_level='debug')
         pl.run('play', 'http://test.url')
-        pl.reload()
 
         assert pl, f"{pl!s}"
 
         assert len(pl) == 1, f"{pl!s}"
         assert 1 in pl, f"{pl!s}"
         assert "http://test.url" in pl, f"{pl!s}"
-        assert isinstance(pl[1], _PlaylistItem), f"{type(pl[1])!r}"
+        assert isinstance(pl[0], _PlaylistItem), f"{type(pl[0])!r}"
 
+        try:
+            assert not pl[1], f"position '{1}' found: {pl[1]}"
+        except IndexError:
+            pass
+
+    def test_003_getters(self):
+        from nmpv_ctrl.playlist import Playlist, _PlaylistItem
+
+        print()
+        pl = Playlist(HOST, str(PORT), log_level='debug')
+
+        assert pl.pos == 0, f"{pl.pos!r}"
+
+        pl.run('new', ytdl=True)
+        pl.run('playlist_append', os.path.abspath(os.path.expanduser('~/test.webm')))
+        el = pl[0]
+
+        assert pl.pos == -1, f"{pl.pos!r}"
+        assert pl.index(el.id) == 0, f"{pl.index(el.id)!r}"
+        assert pl.index(el) == 0, f"{pl.index(el)!r}"
+
+    def test_004_setters(self):
+        from nmpv_ctrl.playlist import Playlist, _PlaylistItem
+
+        print()
+        pl = Playlist(HOST, str(PORT), log_level='debug')
+        pl.reload()
+
+        pl.pause = True
+        pl.pos = 0
+
+        assert pl.pause is True, f"{pl.pause!r}"
+
+        pl.pause = False
+
+        assert pl.pause is False, f"{pl.pause!r}"
+        assert pl[pl.index(1)].playing is True, f"{pl[pl.index(1)].playing!r}"
+        assert pl[pl.index(1)].current is True, f"{pl[pl.index(1)].current!r}"
+
+        # quit
+        #pl.run('new', ytdl=True)
+        pl.run('quit')
+
+        assert not pl, f"{pl!s}"
 
 
 if __name__ == "__main__":

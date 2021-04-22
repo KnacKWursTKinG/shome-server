@@ -61,3 +61,11 @@ class CTRL:
             raise rq.RQError(response)
 
         return pickle.loads(response.content)
+
+    @property
+    def pause(self) -> bool:
+        return self.run('pause')
+
+    @pause.setter
+    def pause(self, state: bool):
+        self.run('pause', bool(state))

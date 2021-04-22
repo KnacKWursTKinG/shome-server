@@ -31,7 +31,9 @@ class Player(Thread):
         self.name = f"player-{id(self)}"
 
         self.mpv_attr = {
-            'new': self.mpv_init
+            'new': self.mpv_init,
+            'quit': self.mpv_quit,
+            'terminate': self.mpv_quit
         }
 
         self._attr = attr
@@ -80,6 +82,13 @@ class Player(Thread):
             **player_args
         )
 
+    def mpv_quit(self):
+        if Player.MPV is not None:
+            Player.MPV.quit(0)
+            Player.MPV.terminate()
+            del Player.MPV
+            Player.MPV = None
+
     def run(self):
         self.logger.debug(f"[{self.name}] {self._attr=}, {self._args=}, {self._kwargs=}")
 
@@ -104,4 +113,7 @@ class Player(Thread):
             self._return = attr(*self._args, **self._kwargs)
 
         else:
-            self._return = attr
+            if self._args:
+                setattr(Player.MPV, self._attr, self._args[0])
+            else:
+                self._return = attr

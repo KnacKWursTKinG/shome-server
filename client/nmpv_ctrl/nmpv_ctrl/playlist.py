@@ -4,7 +4,7 @@ import json
 import pprint
 
 from dataclasses import dataclass
-from typing import Union
+from typing import Union, Optional
 
 from nmpv_ctrl.ctrl import CTRL
 
@@ -47,24 +47,20 @@ class Playlist(CTRL):
         return f"Playlist({self.host!r}, {self.port!r})"
 
     def __str__(self):
-        return pprint.PrettyPrinter(indent=4).pformat(self.__playlist)
+        return pprint.PrettyPrinter().pformat(self.__playlist)
 
     def __len__(self):
         return len(self.__playlist)
 
-    def __contains__(self, item):
+    def __contains__(self, item: Union[int, str, _PlaylistItem]):
         for _el in self.__playlist:
-            if item in [_el.id, _el.filename]:
+            if item in [_el.id, _el.filename, _el]:
                 return True
 
         return False
 
-    def __getitem__(self, item):
-        for _el in self.__playlist:
-            if item in [_el.id, _el.filename]:
-                return _el
-
-        return None
+    def __getitem__(self, index: int) -> _PlaylistItem:
+        return self.__playlist[index]
 
     def __refresh__(self):
         self.logger.debug(f"reload playlist")
@@ -75,3 +71,43 @@ class Playlist(CTRL):
 
     def reload(self):
         self.__refresh__()
+
+    def run(self, attr: str, *args, **kwargs):
+        self.logger.debug(f"{attr=}, {args=}, {kwargs=}")
+        _return = super().run(attr, *args, **kwargs)
+        self.__refresh__()
+
+        return _return
+
+    def index(self, item: Union[int, _PlaylistItem]) -> int:
+        for idx, _el in enumerate(self.__playlist):
+            if item in [_el.id, _el]:
+                return idx
+
+        raise IndexError(item)
+
+    @property
+    def pos(self) -> int:
+        return super().run('playlist_pos')
+
+    @pos.setter
+    def pos(self, pos: int):
+        super().run('playlist_pos', int(pos))
+
+    def append(self):
+        """ @TODO: add file/url to playlist """
+
+    def remove(self):
+        """ @TODO: remove from playlist """
+
+    def next(self):
+        """ @TODO: play next in playlist """
+
+    def prev(self):
+        """ @TODO: play next in playlist """
+
+    def shuffle(self):
+        """ @TODO: shuffle playlist """
+
+    def unshuffle(self):
+        """ @TODO: unshuffle playlist """
