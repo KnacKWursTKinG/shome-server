@@ -3,7 +3,7 @@ import pickle
 
 from flask import Blueprint, request, Response
 
-from kwking_helper import c
+from kwking_helper.config import c
 
 from nmpv.player import Player
 
@@ -16,7 +16,9 @@ def index():
     response: Response
 
     if 'data/bytes' in request.headers.get('Content-Type'):
-        player = Player(*pickle.loads(request.data))
+        req_data = pickle.loads(request.data)
+
+        player = Player(req_data[0], *req_data[1], **req_data[2])
         player.start()
         player.join()
 

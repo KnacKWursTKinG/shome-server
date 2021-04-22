@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import pickle
 import socket
 import types
 import json
@@ -11,7 +10,8 @@ from typing import Union, Optional, Any
 
 import mpv
 
-from kwking_helper import c, ClickLogger
+from kwking_helper.config import c
+from kwking_helper.logging import CL
 
 
 class Player(Thread):
@@ -38,7 +38,7 @@ class Player(Thread):
         self._args = args
         self._kwargs = kwargs
 
-        self.logger = ClickLogger(
+        self.logger = CL(
             c.main.get('plugin@nmpv', 'log_level'),
             name='MPV: Player',
             _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
@@ -81,31 +81,27 @@ class Player(Thread):
         )
 
     def run(self):
-        try:
-            if self._attr in self.mpv_attr:
-                attr = self.mpv_attr[self._attr]
+        self.logger.debug(f"[{self.name}] {self._attr=}, {self._args=}, {self._kwargs=}")
 
-            else:
-                if Player.MPV is not None:
-                    self.mpv_init()
+        if self._attr in self.mpv_attr:
+            attr = self.mpv_attr[self._attr]
 
-                try:
-                    attr = getattr(Player.MPV, self._attr)
+        else:
+            if Player.MPV is None:
+                self.mpv_init()
 
-                except AttributeError as ex:
-                    self._error = ex
-                    self.logger.error(f"{attr!r} not found")
-                    return
+            try:
+                attr = getattr(Player.MPV, self._attr)
 
-            self.logger.debug(f"[{self._attr}] got {attr=} (type: {type(attr)})")
+            except AttributeError as ex:
+                self._error = ex
+                self.logger.error(f"[{self.name}] {ex=}")
+                return
 
-            if isinstance(attr, types.MethodType):
-                self._return = attr(*self._args, **self._kwargs)
+        self.logger.debug(f"[{self.name}] got {attr=} (type: {type(attr)})")
 
-            else:
-                self._return = attr
+        if isinstance(attr, types.MethodType):
+            self._return = attr(*self._args, **self._kwargs)
 
-        except Exception as ex:
-            self._error = ex
-            self.logger.error(f"{ex!r}")
-            return
+        else:
+            self._return = attr

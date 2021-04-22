@@ -1,7 +1,7 @@
-#!/usr/bin/env python
-
 import os
+import sys
 import pickle
+import time
 import socket
 import mimetypes
 
@@ -14,6 +14,7 @@ import requests
 from flask import Flask, Response
 
 from kwking_helper import rq
+from kwking_helper.thread import thread
 
 
 class Base:
@@ -43,64 +44,41 @@ class Playlist(Base):
         self.refresh()
 
     def __iter__(self):
-        self.__thread.join()
+        self.thread.join()
 
         for _ in self.__cache:
             yield _
 
     def __repr__(self):
-        self.__thread.join()
+        self.thread.join()
 
         return f"{self.__cache!r}"
 
     def __str__(self):
-        self.__thread.join()
+        self.thread.join()
 
         return '\n'.join(map(str, self.__cache))
 
     def refresh(self):
         """ load playlist """
         try:
-            if self.__thread.is_alive():
+            if self.thread.is_alive():
                 return
         except Exception:
-            self.__thread = Thread(name=f"playlist-refresh-{id(self)}", target=self.__refresh)
-            self.__thread.start()
+            self.thread = self.__refresh()
 
+    @thread(True)
     def __refresh(self):
         self.__cache = self.command('playlist')
 
-    def append(self, filename: str):
+    def append(self, file: str):
         """ append filename/url to playlist """
-        self.command('playlist_append', filename)
+        self.command('playlist_append', file)
         self.refresh()
 
 
-class Player(Base):
-    def __init__(self, host: str, port: int = 50870, playlist: bool = True):
-        super().__init__(host, port)
-        self.__playlist: Optional[Playlist] = Playlist(host, port) if playlist else None
-
-    def new(self, **player_args):
-        self.command('new', **player_args)
-        self.playlist.refresh()
-
-    def play(self, file: str):
-        self.command('play', file)
-        self.playlist.refresh()
-
-    def stream(self, file: str):
-        stream = Stream(self._host, file)
-        stream.start()
-        self.play(stream.url)
-
-    @property
-    def playlist(self):
-        return self.__playlist
-
-
 class Stream(Process):
-    Queue: set[Process] = set()
+    Queue: list[Process] = list()
 
     def __init__(self, host: str, file: str):
         super().__init__()
@@ -114,15 +92,16 @@ class Stream(Process):
 
         self.mimetype = mimetypes.guess_type(self.file)[0]
         self.rule = f"/{id(self.file)}"
-        self.endpoint = 'stream'
 
         self.port = 0
         self.host = host
-        self.server = Flask(self.endpoint)
+        self.server = Flask(self.name)
 
         self.gen_port()
 
-        Stream.Queue.add(self)
+    def start(self):
+        super().start()
+        Stream.Queue.append(self)
 
     def __del__(self):
         Stream.Queue.remove(self)
@@ -132,6 +111,17 @@ class Stream(Process):
         return f"http://{self.host}:{self.port}{self.rule}"
 
     def run(self):
+        @self.server.after_request
+        def quit(r):
+            def _exit():
+                time.sleep(1)
+                os._exit(0)
+
+            Thread(target=_exit).start()
+
+            return r
+
+        @self.server.route(self.rule)
         def stream():
             def gen_from_file():
                 with open(self.file, 'rb') as f:
@@ -142,12 +132,6 @@ class Stream(Process):
                 gen_from_file(), mimetype=self.mimetype
             )
 
-        self.server.add_url_rule(
-            rule=self.rule,
-            endpoint=self.endpoint,
-            view_func=stream
-        )
-
         self.server.run(self.host, port=self.port)
 
     def gen_port(self):
@@ -155,3 +139,24 @@ class Stream(Process):
             self.port = s.getsockname()[1]
 
         return self.port
+
+
+class Player(Base):
+    def __init__(self, host: str, port: int = 50870):
+        super().__init__(host, port)
+        self.__playlist: Playlist = Playlist(host, port)
+
+    def new(self, **player_args):
+        self.command('new', **player_args)
+        self.playlist.refresh()
+
+    def play(self, file: str):
+        self.command('play', file)
+        self.playlist.refresh()
+
+    def stream(self, file: str) -> Stream:
+        return Stream(self._host, file)
+
+    @property
+    def playlist(self) -> Playlist:
+        return self.__playlist
