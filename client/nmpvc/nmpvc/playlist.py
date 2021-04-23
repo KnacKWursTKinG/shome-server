@@ -1,14 +1,14 @@
 
-import socket
-import json
 import pprint
 
 from dataclasses import dataclass
-from typing import Union, Optional
+from typing import Union
 
-from nmpv_ctrl.ctrl import CTRL
+from nmpvc.ctrl import Control
 
 from kwking_helper.logging import CL
+
+from nmpvc.stream import Stream
 
 
 __all__ = ['_PlaylistItem', 'Playlist']
@@ -22,7 +22,7 @@ class _PlaylistItem:
     playing: bool = False
 
 
-class Playlist(CTRL):
+class Playlist(Control):
     def __init__(self, host: str, port: int = 50870, log_level: str = 'warning'):
         """ Playlist Handler
 
@@ -63,7 +63,7 @@ class Playlist(CTRL):
         return self.__playlist[index]
 
     def __refresh__(self):
-        self.logger.debug(f"reload playlist")
+        self.logger.debug("reload playlist")
 
         self.__playlist = list()
         for _el in super().run('playlist'):
@@ -71,13 +71,6 @@ class Playlist(CTRL):
 
     def reload(self):
         self.__refresh__()
-
-    def run(self, attr: str, *args, **kwargs):
-        self.logger.debug(f"{attr=}, {args=}, {kwargs=}")
-        _return = super().run(attr, *args, **kwargs)
-        self.__refresh__()
-
-        return _return
 
     def index(self, item: Union[int, _PlaylistItem]) -> int:
         for idx, _el in enumerate(self.__playlist):
@@ -88,26 +81,46 @@ class Playlist(CTRL):
 
     @property
     def pos(self) -> int:
-        return super().run('playlist_pos')
+        return self.run('playlist_pos')
 
     @pos.setter
     def pos(self, pos: int):
-        super().run('playlist_pos', int(pos))
+        self.run('playlist_pos', int(pos))
 
-    def append(self):
-        """ @TODO: add file/url to playlist """
+    def append(self, file: Union[str, Stream]):
+        """ add file/url to playlist """
+        if isinstance(file, Stream):
+            _file = file.url
+            file.start()
+        else:
+            _file = file
 
-    def remove(self):
-        """ @TODO: remove from playlist """
+        return self.run('playlist_append', str(_file))
 
-    def next(self):
-        """ @TODO: play next in playlist """
+    def remove(self, index: Union[str, int] = 'current'):
+        """ remove from playlist """
+        return self.run('playlist_remove', index)
 
-    def prev(self):
-        """ @TODO: play next in playlist """
+    def clear(self):
+        """ Clear Playlist """
+        return self.run('playlist_clear')
+
+    def next(self, mode: str = 'weak'):
+        """ play next in playlist """
+        return self.run('playlist_next', mode)
+
+    def prev(self, mode: str = 'weak'):
+        """ play next in playlist """
+        return self.run('playlist_prev', mode)
 
     def shuffle(self):
-        """ @TODO: shuffle playlist """
+        """ shuffle playlist """
+        return self.run('playlist_shuffle')
 
     def unshuffle(self):
-        """ @TODO: unshuffle playlist """
+        """ unshuffle playlist """
+        return self.run('playlist_unshuffle')
+
+    def play_index(self, index: int):
+        """ Play index """
+        return self.run('playlist_index', int(index))

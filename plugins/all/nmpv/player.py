@@ -49,22 +49,38 @@ class Player(Thread):
         self._error = None
         self._return = None
 
+    def start(self):
+        super().start()
         Player.Queue.add(self)
 
     def __del__(self):
-        Player.Queue.remove(self)
+        if self in Player.Queue:
+            Player.Queue.remove(self)
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, *args):
+        self.logger.debug(f"[__exit__] {args=}")
+        self.__del__()
 
     def mpv_logger(self, level: str, component: str, message: str):
         if level in ['v', 'debug']:
             self.logger.debug(f"[{component}] {message}")
+
         elif level == 'info':
             self.logger.info(f"[{component}] {message}")
+
         elif level == 'warn':
             self.logger.warning(f"[{component}] {message}")
+
         elif level == 'error':
             self.logger.error(f"[{component}] {message}")
-        elif level == 'critical':
-            self.logger.info(f"[{component}] {message}")
+
+        elif level == 'fatal':
+            self.logger.critical(f"[{component}] {message}")
+
         else:
             self.logger.warning(f"MPV LOGGER: unknown {level=}")
 
@@ -110,10 +126,20 @@ class Player(Thread):
         self.logger.debug(f"[{self.name}] got {attr=} (type: {type(attr)})")
 
         if isinstance(attr, types.MethodType):
-            self._return = attr(*self._args, **self._kwargs)
+            try:
+                self._return = attr(*self._args, **self._kwargs)
+            except Exception as ex:
+                self._error = f"<{self._attr}(*{self._args}, **{self._kwargs})>, {ex.args[0]}"
+                self.logger.error(f"[{self.name}] {self._error}")
+                return
 
         else:
             if self._args:
-                setattr(Player.MPV, self._attr, self._args[0])
+                try:
+                    setattr(Player.MPV, self._attr, self._args[0])
+                except Exception as ex:
+                    self._error = f"<{self._attr} = ({self._args[0]})>, {ex.args[0]}"
+                    self.logger.error(f"[{self.name}] {self._error}")
+                    return
             else:
                 self._return = attr

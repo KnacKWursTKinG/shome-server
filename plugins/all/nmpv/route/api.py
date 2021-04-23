@@ -18,19 +18,18 @@ def index():
     if 'data/bytes' in request.headers.get('Content-Type'):
         req_data = pickle.loads(request.data)
 
-        player = Player(req_data[0], *req_data[1], **req_data[2])
-        player.start()
-        player.join()
+        with Player(req_data[0], *req_data[1], **req_data[2]) as player:
+            player.join()
 
-        if player._error:
-            response = Response(f"{player._error!r}", status=500, mimetype='text/text')
-        else:
-            response = Response(
-                pickle.dumps(player._return),
-                mimetype='data/bytes'
-            )
+            if player._error:
+                response = Response(player._error, status=400)
+            else:
+                response = Response(
+                    pickle.dumps(player._return),
+                    mimetype='data/bytes'
+                )
 
-        del player
+        print(Player.Queue)
 
     else:
         response = Response(status=400)
