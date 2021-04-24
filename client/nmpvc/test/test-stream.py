@@ -59,4 +59,6 @@ try:
             print_info()
 
 finally:
-    for _ in ctrl: _.quit().join()
+    _t = list()
+    for _ in ctrl: _t.append(_.quit())
+    for _ in _t: _.join()
