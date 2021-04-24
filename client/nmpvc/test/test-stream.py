@@ -16,10 +16,12 @@ FILE = os.path.expanduser('~/test.webm')
 
 seek_regex = re.compile(r"(?P<pre>[+-]?)(?P<time>([0-9\.]*))$")
 
-ctrl = list()
-for host in HOSTS: ctrl.append(Control(host))
+CTRL = list()
 
-for _ in ctrl: _.new(ytdl=True, pause=True)
+for host in HOSTS:
+    ctrl = Control(host)
+    ctrl.new(ytdl=True, pause=True)
+    CTRL.append(ctrl)
 
 
 @threaded(True)
@@ -27,38 +29,69 @@ def print_info():
     tlock = Lock()
 
     @threaded(True)
-    def _print(_ctrl):
-        duration = _ctrl.duration
-        time_pos = _ctrl.time_pos
+    def _print(ctrl):
+        duration = ctrl.duration
+        time_pos = ctrl.time_pos
 
         with tlock:
-            print(f"[{_ctrl.host}] {duration=}, {time_pos=}")
+            print(f"[{ctrl.host}] {duration=}, {time_pos=}")
 
-    for _ in ctrl:
-        _print(_)
+    threads = list()
+    for ctrl in CTRL:
+        threads.append(_print(ctrl))
+
+    for _ in threads:
+        _.join()
+
+
+@threaded(True)
+def pause(state):
+    @threaded(True)
+    def _thread(ctrl):
+        ctrl.pause = state
+
+    threads = list()
+    for ctrl in CTRL:
+        _thread(ctrl)
+
+    for _ in threads:
+        _.join()
+
+
+@threaded(True)
+def seek(*args, **kwargs):
+    @threaded(True)
+    def _thread(ctrl):
+        ctrl.seek(*args, **kwargs)
+
+    threads = list()
+    for ctrl in CTRL:
+        _thread(ctrl)
+
+    for _ in threads:
+        _.join()
+
 
 try:
     with Stream(FILE, HOSTS, log_level='debug') as stream:
-        for _ in ctrl: _.play(stream)
+        for ctrl in CTRL:
+            Thread(target=ctrl.play, args=(stream,)).start()
 
         while (_input := input("Seek or Quit: \n")):
             if _input in ['quit', 'q']:
                 break
 
             if _input in ['play', 'pause']:
-                for _ in ctrl: _.pause = bool(_input == 'pause')
+                pause(bool(_input == 'pause'))
                 continue
 
             match = re.match(seek_regex, _input)
 
             if match:
-                _t = list()
-                for _ in ctrl: _t.append(_.seek(f"{match.group('pre')}{match.group('time')}"))
-                for _ in _t: _.join()
+                seek(f"{match.group('pre')}{match.group('time')}")
 
             print_info()
 
 finally:
-    _t = list()
-    for _ in ctrl: _t.append(_.quit())
-    for _ in _t: _.join()
+    for ctrl in CTRL:
+        Thread(target=ctrl.quit, daemon=False).start()
