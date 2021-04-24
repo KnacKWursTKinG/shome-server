@@ -91,7 +91,9 @@ class Playlist(Control):
         """ add file/url to playlist """
         if isinstance(file, Stream):
             _file = file.url
-            file.start()
+
+            if not file.is_alive():
+                file.start()
         else:
             _file = file
 

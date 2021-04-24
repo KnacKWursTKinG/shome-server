@@ -23,7 +23,7 @@ __all__ = ['Stream']
 class Stream(Process):
     Queue: set[Process] = set()
 
-    def __init__(self, host: Union[str, list[str]], file: str, log_level: str = 'warning'):
+    def __init__(self, file: str, hosts: Union[str, list[str]], log_level: str = 'warning'):
         super().__init__()
         self.daemon = True
         self.id = id(self)
@@ -34,12 +34,12 @@ class Stream(Process):
         if not os.path.isfile(self.file):
             raise FileNotFoundError(self.file)
 
-        self.mimetype = mimetypes.guess_type(self.file)
+        self.mimetype = mimetypes.guess_type(self.file)[0]
         self.rule = f"/{self.id}"
 
-        self.hosts = [host] if not isinstance(host, list) else host
-        self.hosts = [socket.gethostbyname(_) for _ in self.hosts]
-        self.host = self.hosts[0] if len(self.hosts) == 1 else '0.0.0.0'
+        _hosts = set([hosts] if not isinstance(hosts, list) else hosts)
+        self.hosts: list[str] = [socket.gethostbyname(_) for _ in _hosts]
+        self.host = '0.0.0.0' if len(self.hosts) > 1 else self.hosts[0]
         self.port = 0
         self.chunk_size = 1024 * 1024
 
@@ -48,10 +48,15 @@ class Stream(Process):
         )
 
     def __del__(self):
+        if self.is_alive():
+            self.kill()
+
         if self in Stream.Queue:
             Stream.Queue.remove(self)
 
     def __enter__(self):
+        self.start()
+        self.join(.1)
         return self
 
     def __exit__(self, *args):
@@ -72,20 +77,33 @@ class Stream(Process):
             self.port = s.getsockname()[1]
 
     def run(self):
+        import logging
         server = Flask(self.name)
-        hosts = self.hosts
+        self.hosts_server_quit = self.hosts
+        logging.getLogger('werkzeug').disabled = True
+        os.environ['WERKZEUG_RUN_MAIN'] = 'true'
 
         @server.after_request
         def quit(response: Response):
-            self.logger.debug(f"[after_request] {request.host=}, {request.host_url}")
-            # TODO: remove host from hsots
-            ...
+            try:
+                self.logger.debug(
+                    f"remove {request.remote_addr!r} from {self.hosts_server_quit!r}"
+                )
+                self.hosts_server_quit.remove(request.remote_addr)
+            except ValueError:
+                if request.remote_addr == '127.0.0.1':
+                    self.logger.debug(
+                        f"ValueError: remove '127.0.1.1' from {self.hosts_server_quit!r}"
+                    )
+                    self.hosts_server_quit.remove('127.0.1.1')
 
             def _exit():
                 time.sleep(1)
                 os._exit(0)
 
-            Thread(target=_exit).start()
+            if not self.hosts_server_quit:
+                self.logger.debug(f"quit server ({self.host=}, {self.port=})")
+                Thread(target=_exit).start()
 
             return response
 
@@ -100,4 +118,5 @@ class Stream(Process):
                 generator(), mimetype=self.mimetype
             )
 
+        self.logger.debug(f"server start on ({self.host=}, {self.port=})")
         server.run(self.host, self.port)
