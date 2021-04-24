@@ -8,6 +8,7 @@ from typing import Any, Union, Optional
 import requests
 
 from kwking_helper import rq
+from kwking_helper.thread import threaded, ThreadData
 
 from nmpvc.stream import Stream
 
@@ -35,6 +36,7 @@ class Control:
     def url(self) -> str:
         return f"http://{self.host}:{self.port}/api/{self.name}/player"
 
+    @threaded(True)
     def run(self, attr: str, *args, **kwargs):
         """ Send nmpv package
 
@@ -68,15 +70,15 @@ class Control:
 
     @property
     def pause(self) -> bool:
-        return self.run('pause')
+        return self.run('pause').join()
 
     @pause.setter
-    def pause(self, state: bool):
-        self.run('pause', bool(state))
+    def pause(self, state: bool) -> ThreadData:
+        return self.run('pause', bool(state))
 
     @property
     def duration(self) -> Optional[Union[float]]:
-        return self.run('duration')
+        return self.run('duration').join()
 
     @duration.setter
     def duration(self):
@@ -84,36 +86,40 @@ class Control:
 
     @property
     def time_pos(self) -> Optional[Union[int, float]]:
-        return self.run('time_pos')
+        return self.run('time_pos').join()
 
     @time_pos.setter
-    def time_pos(self, pos: Union[int, float]):
-        self.run('time_pos', float(pos))
+    def time_pos(self, pos: Union[int, float]) -> ThreadData:
+        return self.run('time_pos', float(pos))
 
     @property
     def time_remaining(self) -> Optional[Union[int, float]]:
-        return self.run('time_remaining')
+        return self.run('time_remaining').join()
 
     @time_remaining.setter
     def time_remaining(self):
         pass
 
-    def new(self, **player_args):
+    def new(self, **player_args) -> ThreadData:
         """ crate a new MPV Player """
         return self.run('new', **player_args)
 
-    def play(self, file: Union[str, Stream]):
+    def play(self, file: Union[str, Stream]) -> ThreadData:
         """ Play a file or url """
         if isinstance(file, Stream):
             _file = file.url
-            file.start()
+
+            if not file.is_alive():
+                file.start()
         else:
             _file = file
 
         return self.run('play', str(_file))
 
-    def seek(self, amount: Union[str, int, float], reference='relative', precision='default-precise'):
+    def seek(self, amount: Union[str, int, float], reference='relative',
+             precision='default-precise') -> ThreadData:
+
         return self.run('seek', amount, **dict(reference=reference, precision=precision))
 
-    def quit(self):
+    def quit(self) -> ThreadData:
         return self.run('quit')
