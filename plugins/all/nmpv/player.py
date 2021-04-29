@@ -25,7 +25,7 @@ class Player(Thread):
     except AttributeError:
         PLAYER_ARGS = dict()
 
-    def __init__(self, attr, *args, **kwargs):
+    def __init__(self, sync: Optional[float], attr, *args, **kwargs):
         super().__init__()
         self.daemon = True
         self.name = f"player-{id(self)}"
@@ -35,7 +35,13 @@ class Player(Thread):
             'quit': self.mpv_quit,
             'terminate': self.mpv_quit
         }
+        self._mpv_attr_no_init = [
+            'new',
+            'quit',
+            'terminate'
+        ]
 
+        self._sync = sync
         self._attr = attr
         self._args = args
         self._kwargs = kwargs
@@ -111,6 +117,9 @@ class Player(Thread):
         if self._attr in self.mpv_attr:
             attr = self.mpv_attr[self._attr]
 
+            if Player.MPV is None and self._attr not in self._mpv_attr_no_init:
+                self.mpv_init()
+
         else:
             if Player.MPV is None:
                 self.mpv_init()
@@ -127,6 +136,7 @@ class Player(Thread):
 
         if isinstance(attr, types.MethodType):
             try:
+                # @todo run on self._sync if set
                 self._return = attr(*self._args, **self._kwargs)
             except Exception as ex:
                 self._error = f"<{self._attr}(*{self._args}, **{self._kwargs})>, {ex.args[0]}"
@@ -136,10 +146,12 @@ class Player(Thread):
         else:
             if self._args:
                 try:
+                    # @todo run on self._sync if set
                     setattr(Player.MPV, self._attr, self._args[0])
                 except Exception as ex:
                     self._error = f"<{self._attr} = ({self._args[0]})>, {ex.args[0]}"
                     self.logger.error(f"[{self.name}] {self._error}")
                     return
             else:
+                # @todo run on self._sync if set
                 self._return = attr

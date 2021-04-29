@@ -16,9 +16,10 @@ def index():
     response: Response
 
     if 'data/bytes' in request.headers.get('Content-Type'):
+        # @todo add sync (timestamp & optional)
+        # @todo change to json {'sync': ...'attr': '...', 'args': [...], 'kwargs': {...: ...}}
         req_data = pickle.loads(request.data)
-
-        with Player(req_data[0], *req_data[1], **req_data[2]) as player:
+        with Player(None, req_data[0], *req_data[1], **req_data[2]) as player:
             player.join()
 
             if player._error:
