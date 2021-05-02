@@ -160,6 +160,7 @@ def term_get(obj: Obj):
 
     for _t, host, sections in threads:
         _t.join()
+        obj.logger.debug(f"{_t.err=}, {_t.ret=}")
 
         if _t.err:
             obj.logger.error(f"[get] {host}: {_t.err!r}")
