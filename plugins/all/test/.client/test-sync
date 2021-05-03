@@ -15,32 +15,58 @@ from kwking_helper.thread import threaded2, ThreadData
 THREAD_LOCK = threading.Lock()
 
 
-@click.group(cls=ClickAliasedGroup)
+@click.group(cls=ClickAliasedGroup, chain=True)
 def cli():
     """ Test Client (shomeserver test plugin) """
-    pass
 
 
 @cli.command('sync', aliases=['sync', 's'])
-@click.option('-h', '--host', multiple=True, default='localhost', show_default=True,
+@click.option('-h', '--host', multiple=True, required=True,
               help="shomeserver host [multiple: True]")
 @click.option('-p', '--port', type=int, default=50870, show_default=True,
               help="shomeserver port")
-@click.option('-d', '--delay', type=float, defalut=1.0, show_default=True,
-              help="delay (added to time.time timestamp)")
+@click.option('-d', '--delay', type=float,
+              help="delay (added to time.time timestamp) [default: 1.0]")
 def sync(host: tuple[str, ...], port: int, delay: float):
     """ Sync (timestamp test) """
+    if delay is None:
+        delay = 1.0
+
+    ts: float = time.time() + delay
+
     def t_success(_, r: requests.Response):
         with THREAD_LOCK:
-            click.echo(f"[{r.url}] {json.loads(r.text)}")
+            click.echo((
+                f"[{r.url.split('/')[2]}] "
+                f"[delay: {delay}] "
+                f"[precision: {json.loads(r.text) - ts:.5f}]"
+            ))
 
     def t_error(_, ex: Exception):
-        with THREAD_LOCK:
-            click.echo(f"err: {ex!r}", err=True)
+        if isinstance(ex.args[0], requests.Response):
+            r: requests.Response = ex.args[0]
 
+            if 'application/json' in r.headers.get('Content-Type', ''):
+                host = r.url.split('/')[2]
+                data = json.loads(r.text)  # @note: 'message', 'ts'
+
+                with THREAD_LOCK:
+                    click.echo(f"[{host}] [delay: {delay}] {data['message']}", err=True)
+
+            else:
+                with THREAD_LOCK:
+                    click.echo(f"[{host}] err: {r!r}", err=True)
+                    click.echo(f"{r.text}", err=True)
+
+        else:
+            with THREAD_LOCK:
+                click.echo(f"err: {ex!r}", err=True)
 
     @threaded2(False, t_success, t_error)
     def __thread(host: str, timestamp: float):
+        with THREAD_LOCK:
+            click.echo(f"[{host}:{port}] [delay: {delay}] {timestamp=}", err=True)
+
         r = requests.get(
             f"http://{host}:{port}/api/test/sync",
             params={'time': timestamp}
@@ -49,12 +75,7 @@ def sync(host: tuple[str, ...], port: int, delay: float):
         if r:
             return r
 
-        raise Exception(f"err: {r!r}, {r.text or None}")
-
-    ts: float = time.time() + delay
-
-    with THREAD_LOCK:
-        click.echo(f"Send {ts=} to {', '.join(list(host))}", err=True)
+        raise Exception(r)
 
     for _host in list(host):
         __thread(_host, ts)

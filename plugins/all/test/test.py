@@ -7,11 +7,12 @@ class SyncError(Exception):
 
 
 def sync(timestamp: float) -> float:
-    time_to_wait = timestamp - time.time()
+    ts = timestamp - time.time()
+    print(f"{ts=}, ({timestamp=} - {time.time()=})", flush=True)
 
-    if time_to_wait <= 0:
-        raise SyncError(time_to_wait)
-
-    time.sleep(time_to_wait)
+    try:
+        time.sleep(ts)
+    except ValueError:
+        raise SyncError(ts)
 
     return time.time()
