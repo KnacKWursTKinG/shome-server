@@ -129,7 +129,7 @@ def pi_command(command: str):
         _t.join()
 
         if _t.err:
-            return make_response(_t.err, 500)
+            return make_response(f"{_t.err!r}", 500)
 
         del _t
 
