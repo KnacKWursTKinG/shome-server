@@ -1,12 +1,9 @@
 
 from __future__ import annotations
 
-import socket
-import types
-import json
+import time
 
-from threading import Thread
-from typing import Union, Optional, Any
+from typing import Optional, Any, Callable
 
 import mpv
 
@@ -14,146 +11,99 @@ from kwking_helper.config import c
 from kwking_helper.logging import CL
 
 
-class Player(Thread):
-    Queue: set[Player] = set()
+class SyncError(Exception):
+    def __init__(self, ts: float):
+        super().__init__(float(ts))
+
+
+class Player:
     MPV: mpv.MPV = None
 
-    try:
-        PLAYER_ARGS = json.loads(
-            c.mpv._sections.get(socket.gethostname(), '{}')
-        )
-    except AttributeError:
-        PLAYER_ARGS = dict()
-
-    def __init__(self, sync: Optional[float], attr, *args, **kwargs):
-        super().__init__()
-        self.daemon = True
-        self.name = f"player-{id(self)}"
-
-        self.mpv_attr = {
-            'new': self.mpv_init,
-            'quit': self.mpv_quit,
-            'terminate': self.mpv_quit
+    def __init__(self, ts: Optional[float] = None):
+        self.__ts = ts
+        self._custom = {
+            'new': self.new,
+            'quit': self.quit,
+            'terminate': self.quit
         }
-        self._mpv_attr_no_init = [
-            'new',
-            'quit',
-            'terminate'
-        ]
 
-        self._sync = sync
-        self._attr = attr
-        self._args = args
-        self._kwargs = kwargs
-
-        self.logger = CL(
+        self._logger = CL(
             c.main.get('plugin@nmpv', 'log_level'),
             name='MPV: Player',
             _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
         )
 
-        self._error = None
-        self._return = None
+    @property
+    def ts(self):
+        return self.__ts
 
-    def start(self):
-        super().start()
-        Player.Queue.add(self)
-
-    def __del__(self):
-        if self in Player.Queue:
-            Player.Queue.remove(self)
+    @ts.setter
+    def ts(self, value: Optional[float]):
+        self.__ts = float(value) if value is not None else None
 
     def __enter__(self):
-        self.start()
+        self.wait_for_sync()
+
         return self
 
     def __exit__(self, *args):
-        self.logger.debug(f"[__exit__] {args=}")
-        self.__del__()
+        pass
 
-    def mpv_logger(self, level: str, component: str, message: str):
-        if level in ['v', 'debug']:
-            self.logger.debug(f"[{component}] {message}")
-
-        elif level == 'info':
-            self.logger.info(f"[{component}] {message}")
-
-        elif level == 'warn':
-            self.logger.warning(f"[{component}] {message}")
-
-        elif level == 'error':
-            self.logger.error(f"[{component}] {message}")
-
-        elif level == 'fatal':
-            self.logger.critical(f"[{component}] {message}")
-
-        else:
-            self.logger.warning(f"MPV LOGGER: unknown {level=}")
-
-    def mpv_init(self, *extra_mpv_flags, **player_args):
+    def new(self, *flags, **kwargs):
         if isinstance(Player.MPV, mpv.MPV):
-            self.logger.debug("quit existing player")
-            _mpv = Player.MPV
-            _mpv.quit(0)
-            _mpv.terminate()
-            del _mpv
+            self.logger('info', 'new', 'exit existing player instance')
+            self.quit()
 
         Player.MPV = mpv.MPV(
-            *extra_mpv_flags,
-            log_handler=self.mpv_logger, loglevel='debug',
-            **player_args
+            *flags,
+            log_handler=self.logger, loglevel='debug',
+            **kwargs
         )
 
-    def mpv_quit(self):
-        if Player.MPV is not None:
+    def quit(self):
+        if isinstance(Player.MPV, mpv.MPV):
             Player.MPV.quit(0)
             Player.MPV.terminate()
             del Player.MPV
             Player.MPV = None
 
-    def run(self):
-        self.logger.debug(f"[{self.name}] {self._attr=}, {self._args=}, {self._kwargs=}")
+    def wait_for_sync(self):
+        if self.ts is None:
+            return
 
-        if self._attr in self.mpv_attr:
-            attr = self.mpv_attr[self._attr]
+        try:
+            ts = self.ts - time.time()
+            time.sleep(ts)
+        except ValueError as ex:
+            raise SyncError(ts) from ex
 
-            if Player.MPV is None and self._attr not in self._mpv_attr_no_init:
-                self.mpv_init()
+    def logger(self, level: str, component: str, message: str):
+        if level in ['v', 'debug']:
+            self._logger.debug(f"[{component}] {message}")
 
-        else:
-            if Player.MPV is None:
-                self.mpv_init()
+        elif level == 'info':
+            self._logger.info(f"[{component}] {message}")
 
-            try:
-                attr = getattr(Player.MPV, self._attr)
+        elif level in ['warn', 'warning']:
+            self._logger.warning(f"[{component}] {message}")
 
-            except AttributeError as ex:
-                self._error = ex
-                self.logger.error(f"[{self.name}] {ex=}")
-                return
+        elif level == 'error':
+            self._logger.error(f"[{component}] {message}")
 
-        self.logger.debug(f"[{self.name}] got {attr=} (type: {type(attr)})")
-
-        if isinstance(attr, types.MethodType):
-            try:
-                # @todo run on self._sync (timestamp) if set
-                self._return = attr(*self._args, **self._kwargs)
-
-            except Exception as ex:
-                self._error = f"<{self._attr}(*{self._args}, **{self._kwargs})>, {ex.args[0]}"
-                self.logger.error(f"[{self.name}] {self._error}")
-                return
+        elif level in ['fatal', 'critical']:
+            self._logger.critical(f"[{component}] {message}")
 
         else:
-            if self._args:
-                try:
-                    # @todo run on self._sync (timestamp) if set
-                    setattr(Player.MPV, self._attr, self._args[0])
+            self._logger.warning(f"MPV LOGGER: unknown {level=}")
 
-                except Exception as ex:
-                    self._error = f"<{self._attr} = ({self._args[0]})>, {ex.args[0]}"
-                    self.logger.error(f"[{self.name}] {self._error}")
-                    return
-            else:
-                # @todo run on self._sync (timestamp) if set
-                self._return = attr
+    def getattr(self, name: str):  # raises AttributeError if name not found in obj
+        if name in self._custom:
+            return self._custom[name]
+
+        return getattr(Player.MPV, name)
+
+    def setattr(self, name: str, value: Any):
+        setattr(Player.MPV, name, value)
+
+    def runattr(self, attr: Callable, *args, **kwargs):
+        return attr(*args, **kwargs)

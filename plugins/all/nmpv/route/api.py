@@ -1,9 +1,10 @@
 
-import pickle
+import types
+import json
+
+from typing import Optional, Any
 
 from flask import Blueprint, request, Response
-
-from kwking_helper.config import c
 
 from nmpv.player import Player
 
@@ -13,26 +14,44 @@ blueprint = Blueprint('MPV', __name__)
 
 @blueprint.route('/player', methods=['POST'])
 def index():
-    response: Response
+    resp: Response
+    sync: Optional[float] = float(request.args['sync']) if 'sync' in request.args else None
+    ret_data: Any = None
 
-    if 'data/bytes' in request.headers.get('Content-Type'):
-        # @todo add sync (timestamp & optional)
-        # @todo change to json {'sync': ...'attr': '...', 'args': [...], 'kwargs': {...: ...}}
-        req_data = pickle.loads(request.data)
-        with Player(None, req_data[0], *req_data[1], **req_data[2]) as player:
-            player.join()
+    if 'application/json' in request.headers.get('Content-Type'):
+        req_data = request.get_json()
+        # req_data == { 'attr': str, 'args': list[Any], 'kwargs': dict[str, Any] }
 
-            if player._error:
-                response = Response(player._error, status=400)
+        if isinstance(req_data, dict):
+            if 'attr' not in req_data:
+                resp = Response("'attr' missing", status=400)
+
             else:
-                response = Response(
-                    pickle.dumps(player._return),
-                    mimetype='data/bytes'
-                )
+                with Player(sync) as player:
+                    _attr = player.getattr(req_data['attr'])
 
-        print(Player.Queue)
+                    if isinstance(_attr, types.MethodType):
+                        ret_data = player.runattr(
+                            _attr,
+                            *req_data.get('args', []),
+                            **req_data.get('kwargs', {})
+                        )
+
+                    else:
+                        if req_data.get('args'):
+                            player.setattr(req_data['attr'], req_data['args'][0])
+                        else:
+                            ret_data = _attr
+
+                resp = Response(json.dumps(ret_data), status=200, mimetype='application/json')
+
+        else:
+            resp = Response(
+                f"wrong data: expect '{type(dict())}' but got '{type(req_data)}'",
+                status=400
+            )
 
     else:
-        response = Response(status=400)
+        resp = Response("missing json data", status=400)
 
-    return response
+    return resp
