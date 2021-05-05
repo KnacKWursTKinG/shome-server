@@ -24,6 +24,9 @@
   * base (`mpv.MPV` setters and getters)
 
     * NetMPVControlHelp (list with available methods/attribute)
+    > `inspect.getfullargspec(getattr(mpv.MPV(), 'playlist_append')) -> ...`<br/>
+    > `... inspect.FullArgSpec(...)`
+
       * methods
       * attr (with defaults)
 
