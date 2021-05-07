@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import types
 import inspect
@@ -5,16 +6,17 @@ import inspect
 from kwking_helper.logging import CL
 
 
-Code = """
+TemplateClassBase = """
 
 import json
+import socket
 
 import requests
 
 from kwking_helper import rq
 
 
-class MPV:
+class MPVBase:
     def __init__(self, host, port = 50870):
         self.url = f"http://{socket.gethostbyname(host)}:{port}/api/nmpv/player"
 
@@ -48,26 +50,41 @@ class MPV:
     def _get_prop(self, prop: str):
         return self._send_data({
             "attr": str(prop)
-        })
+        })\
+"""
+
+TemplateClassMPVProperty = """
+
+class MPVProperty(MPVBase):\
+"""
+
+TemplateClassMPVMethod = """
+
+class MPVMethod(MPVBase):\
+"""
+
+TemplateClassMPV = """
+
+class MPV(MPVProperty, MPVMethod):
+    pass\
 """
 
 TemplateProperty = """
 
     @property
     def {name}(self):
-        return self._get_prop({name})
+        return self._get_prop('{name}')
 
     @{name}.setter
     def {name}(self, value):
-        return self._set_prop('{name}', value)
+        return self._set_prop('{name}', value)\
 """
 
 TemplateMethod = """
 
     def {name}({args}, *{varargs}, **{varkw}):
-        return self._run_method({name}, {args}, *{varargs}, **{varkw})
+        return self._run_method('{name}', {args}, *{varargs}, **{varkw})\
 """
-
 
 
 class BuildMPV:
@@ -76,30 +93,40 @@ class BuildMPV:
             'debug', __name__, _format="[{level}] {message}"
         )
 
-        self.code = Code
+        self.code_base = TemplateClassBase
+        self.code_property = TemplateClassMPVProperty
+        self.code_method = TemplateClassMPVMethod
+        self.code_mpv = TemplateClassMPV
 
     def run(self):
         import mpv
 
         player = mpv.MPV()
 
-        for name in dir(player):
+        for name in list(set(dir(player))):
             try:
                 attr = getattr(player, name)
-            except RuntimeError as ex:
+
+            except (RuntimeError, AttributeError) as ex:
                 self.logger.error(f"{ex.args[2][1].decode()}: {ex.args[0]}")
                 continue
 
-            if name[0] == '-':
+            if name[0] == '_':
                 continue
 
-            if name in ['quit', 'terminate']:
+            if name in ['quit', 'terminate', '3dlut_size']:
                 continue
 
             if isinstance(attr, types.MethodType):
                 _params = inspect.getfullargspec(attr)
 
-                self.code += TemplateMethod.format(
+                if _params.args:
+                    if _params.args[0] != 'self':
+                        _params.args.insert(0, 'self')
+                else:
+                    _params.args.append('self')
+
+                self.code_method += TemplateMethod.format(
                     name=name,
                     args=', '.join(_params.args),
                     varargs=_params.varargs or 'args',
@@ -107,11 +134,11 @@ class BuildMPV:
                 )
 
             else:
-                self.code += TemplateProperty.format(name=name)
+                self.code_property += TemplateProperty.format(name=name)
 
     def save(self, out: str):
         with open(out, 'w') as file:
-            file.write(self.code)
+            file.write(self.code_base + self.code_property + self.code_method + self.code_mpv)
 
 
 if __name__ == "__main__":
