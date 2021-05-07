@@ -55,10 +55,12 @@ class MPVBase:
 
 TemplateClassMPVProperty = """
 
+
 class MPVProperty(MPVBase):\
 """
 
 TemplateClassMPVMethod = """
+
 
 class MPVMethod(MPVBase):\
 """
@@ -82,7 +84,7 @@ TemplateProperty = """
 
 TemplateMethod = """
 
-    def {name}({args}, *{varargs}, **{varkw}):
+    def {name}(self, {args}, *{varargs}, **{varkw}):
         return self._run_method('{name}', {args}, *{varargs}, **{varkw})\
 """
 
@@ -128,7 +130,7 @@ class BuildMPV:
 
                 self.code_method += TemplateMethod.format(
                     name=name,
-                    args=', '.join(_params.args),
+                    args=', '.join(_params.args[1:len(_params.defaults) if _params.defaults else -1]),
                     varargs=_params.varargs or 'args',
                     varkw=_params.varkw or 'kwargs'
                 )
