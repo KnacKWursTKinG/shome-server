@@ -8,7 +8,16 @@ Code = """
 
 class MPV:
     def __init__(self):
-        pass
+        ...
+
+    def _run_method(self, name: str, *args, **kwargs):
+        ...
+
+    def _set_prop(self, prop: str, value):
+        ...
+
+    def _get_prop(self, prop: str):
+        ...
 
 """
 
@@ -16,11 +25,11 @@ TemplateProperty = """
 
     @property
     def {name}(self):
-        return self._get({name})
+        return self._get_prop({name})
 
     @{name}.setter
     def {name}(self, value):
-        self._set('{name}', value)
+        self._set_prop('{name}', value)
 
 """
 
