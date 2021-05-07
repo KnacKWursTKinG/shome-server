@@ -144,4 +144,4 @@ class BuildMPV:
 if __name__ == "__main__":
     build = BuildMPV()
     build.run()
-    build.save('nmpvc.py')
+    build.save('_mpv.py')
