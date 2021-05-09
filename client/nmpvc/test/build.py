@@ -12,8 +12,8 @@ import mpv
 player = mpv.MPV()
 
 db: dict[str, dict[str, Optional[Any]]] = {
-    "property": {},
-    "method": {}
+    "method": {},
+    "property": {}
 }
 
 for name in list(set(dir(player))):
@@ -24,23 +24,39 @@ for name in list(set(dir(player))):
         print(f"err: {ex.args[2][1].decode()}: {ex.args[0]}", file=sys.stderr)
         continue
 
-    if isinstance(attr, types.MethodType):
+    if isinstance(attr, types.MethodWrapperType):
+        print(f"skip method-wrapper type: {attr!r}")
+        continue
+
+    if isinstance(attr, (types.MethodType, types.FunctionType)):
         params = inspect.getfullargspec(attr)
 
-        _args_len = len(params.args) - (len(params.defaults) if params.defaults else -1)
-        args = params.args[:_args_len]
+        #_args_len = len(params.args) - (len(params.defaults) if params.defaults else -1)
+        #args = params.args[:_args_len]
 
-        if 'self' in args:
-            args.remove('self')
+        #if 'self' in args:
+        #    args.remove('self')
 
-        kwargs = dict()
-        for key, default in zip(params.args[_args_len:], list(params.defaults) if params.defaults else []):
-            kwargs[key] = default
+        #kwargs = dict()
+        #for key, default in zip(params.args[_args_len:], list(params.defaults) if params.defaults else []):
+        #    kwargs[key] = default
+
+        defaults = list()
+        for _default in list(params.defaults) if params.defaults else []:
+            defaults.append(f"{_default!r}")
+
+        kwonlydefaults = dict()
+        for _key, _value in params.kwonlydefaults.items() if params.kwonlydefaults else {}.items():
+            kwonlydefaults[_key] = f"{_value!r}"
 
         db['method'][name] = {
-            "help": f"{params!r}",
-            "args": f"{args!r}",
-            "kwargs": f"{kwargs!r}"
+            "args": params.args,
+            "varargs": params.varargs,
+            "varkw": params.varkw,
+            "defaults": defaults,
+            "kwonlyargs": params.kwonlyargs,
+            "kwonlydefaults": kwonlydefaults,
+            "annotations": params.annotations
         }
 
     else:
