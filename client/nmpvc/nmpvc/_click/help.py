@@ -8,17 +8,17 @@ import click_aliases
 
 @click.group('help', cls=click_aliases.ClickAliasedGroup)
 @click.pass_context
-def cli(ctx):
+def cli_help(ctx):
     """ search for methods or attributes in `mpv.MPV` """
     with open(__file__.rsplit('/', 1)[0] + '/mpv-help.pickle', 'rb') as file:
         ctx.obj = pickle.load(file)
 
 
-@cli.command('search', aliases=['s'])
+@cli_help.command('search', aliases=['s'])
 @click.option('-s', '--short', is_flag=True, default=False, help="only show matching property/method name(s)")
 @click.argument('name')
 @click.pass_obj
-def search(obj, short: bool, name: str):
+def help_search(obj, short: bool, name: str):
     """ Search for an attribute """
     matches = list()
     for _key, _value in obj['method'].items():
@@ -40,10 +40,10 @@ def search(obj, short: bool, name: str):
             click.echo(f"{pprint.pformat(_data)}")
 
 
-@cli.command('info', aliases=['i'])
+@cli_help.command('info', aliases=['i'])
 @click.argument('name')
 @click.pass_obj
-def info(obj, name: str):
+def help_info(obj, name: str):
     """ get info for attribute """
     for _key in obj['method']:
         if _key == name:

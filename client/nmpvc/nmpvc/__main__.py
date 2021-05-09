@@ -2,20 +2,10 @@
 import os
 import sys
 
-import click
-
 module_path = os.path.abspath(__file__).rsplit('/', 2)[0]
 sys.path.insert(0, module_path)
 
-from nmpvc._click import help
+from nmpvc._click import nmpv
 
 
-@click.group()
-def cli():
-    """ Network MPV Client """
-
-
-cli.add_command(help.cli)
-
-
-cli()
+nmpv.cli()
