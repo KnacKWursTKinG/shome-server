@@ -1,5 +1,5 @@
 
-import json
+import dill as pickle
 import pprint
 
 import click
@@ -10,11 +10,11 @@ import click_aliases
 @click.pass_context
 def cli(ctx):
     """ search for methods or attributes in `mpv.MPV` """
-    with open(__file__.rsplit('/', 1)[0] + '/mpv-help.json', 'r') as file:
-        ctx.obj = json.load(file)
+    with open(__file__.rsplit('/', 1)[0] + '/mpv-help.pickle', 'rb') as file:
+        ctx.obj = pickle.load(file)
 
 
-@cli.command('search')
+@cli.command('search', aliases=['s'])
 @click.option('-s', '--short', is_flag=True, default=False, help="only show matching property/method name(s)")
 @click.argument('name')
 @click.pass_obj
@@ -40,7 +40,7 @@ def search(obj, short: bool, name: str):
             click.echo(f"{pprint.pformat(_data)}")
 
 
-@cli.command('info')
+@cli.command('info', aliases=['i'])
 @click.argument('name')
 @click.pass_obj
 def info(obj, name: str):

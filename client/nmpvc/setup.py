@@ -22,6 +22,7 @@ setup(
 
     install_requires=[
         'requests',
+        'dill',
         'click',
         'click-aliases',
         'flask',

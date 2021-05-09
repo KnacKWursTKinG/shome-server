@@ -1,6 +1,6 @@
 """ Playlist handler (Main Client Class) """
 
-from .mpv import MPVBase
+from .base import MPVBase
 
 
 __all__ = ['PL', 'Playlist']

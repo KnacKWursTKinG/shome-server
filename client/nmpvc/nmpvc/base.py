@@ -41,4 +41,4 @@ class MPVBase:
     def _get_prop(self, prop: str):
         return self._send_data({
             "attr": str(prop)
-        })\
+        })
