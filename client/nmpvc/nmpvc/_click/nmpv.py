@@ -1,10 +1,15 @@
 
+import sys
+import socket
+
 import click
 
 from . import Cache
 from .help import cli_help
 from .pl import cli_pl
 from .smb import cli_smb
+
+from nmpvc.base import MPV
 
 
 @click.group()
@@ -21,6 +26,14 @@ def cli(ctx, server: tuple[str], port: int, debug: bool):
 
     if debug:
         ctx.obj.logger.level = 'debug'
+
+    ctx.obj.logger.name = 'nmpvc'
+
+    try:
+        ctx.obj.pl.mpv = MPV(*[(_host, port) for _host in server])
+    except socket.gaierror as ex:
+        ctx.obj.logger.error(f"{ex}")
+        sys.exit(1)
 
 
 cli.add_command(cli_help)

@@ -4,11 +4,13 @@ from typing import Optional
 
 from kwking_helper.logging import CL
 
+from nmpvc.base import MPV
+
 
 @dataclass
 class _PL:
     url: list[str] = field(default_factory=list)
-    addr: list[tuple[str, int]] = field(default_factory=list)
+    mpv: Optional[MPV] = None
 
     def add(self, url: str):
         self.url.append(str(url))

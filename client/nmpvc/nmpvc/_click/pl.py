@@ -21,6 +21,8 @@ def cli_pl(ctx):
 def pl_append(obj: _Cache):
     """ Append/Add new file """
     #ctx.obj.logger.name = 'append'
+    if not isinstance(obj.pl.mpv, MPV):
+        raise TypeError(f"expect {type(MPV)} for 'obj.smb', got {type(obj.pl.mpv)}")
 
     for url in obj.pl.url:
-        ...
+        obj.pl.mpv.run_method('playlist_append', url)

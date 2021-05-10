@@ -2,18 +2,23 @@
 import json
 import socket
 
+from typing import Any
+
 import requests
 
 from kwking_helper import rq
 
 
 class MPVBase:
-    def __init__(self, host, port = 50870):
-        self.url = f"http://{socket.gethostbyname(host)}:{port}/api/nmpv/player"
+    def __init__(self, port: int = 50870):
+        self.port = port
 
-    def send_data(self, data):
+    def url(self, server: str):
+        return f"http://{server}:{self.port}/api/nmpv/player"
+
+    def send_data(self, server: str, data: Any):
         resp = requests.post(
-            self.url,
+            self.url(server),
             json.loads(data),
             headers={
                 'Content-Type': 'application/json'
@@ -25,23 +30,32 @@ class MPVBase:
 
         return json.loads(resp.text) if "application/json" in resp.headers.get('Content-Type') else None
 
-    def run_method(self, name: str, *args, **kwargs):
-        return self.send_data({
-            "attr": str(name),
-            "args": args,
-            "kwargs": kwargs
-        })
+    def run_method(self, server: str, name: str, *args, **kwargs):
+        return self.send_data(
+            server,
+            {
+                "attr": str(name),
+                "args": args,
+                "kwargs": kwargs
+            }
+        )
 
-    def set_prop(self, prop: str, value):
-        return self.send_data({
-            "attr": str(prop),
-            "value": value
-        })
+    def set_prop(self, server: str, prop: str, value: Any):
+        return self.send_data(
+            server,
+            {
+                "attr": str(prop),
+                "value": value
+            }
+        )
 
-    def get_prop(self, prop: str):
-        return self.send_data({
-            "attr": str(prop)
-        })
+    def get_prop(self, server: str, prop: str):
+        return self.send_data(
+            server,
+            {
+                "attr": str(prop)
+            }
+        )
 
 
 class MPV:
@@ -49,4 +63,15 @@ class MPV:
         self.base: dict[str, MPVBase] = dict()
 
         for server, port in addr:
-            self.base[server] = MPVBase(server, int(port))
+            self.base[server] = MPVBase(int(port))
+
+    def run_method(self, name: str, *args, **kwargs):
+        ...
+
+    def __setattr__(self, name: str, value: Any):
+        print(f"__setattr__ ({name=}, {value=})")
+        ...
+
+    def __getattr__(self, name: str):
+        print(f"__getattr__ ({name=})")
+        ...
