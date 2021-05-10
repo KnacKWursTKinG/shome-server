@@ -2,7 +2,8 @@
 import json
 import os
 
-from kwking_helper import c, rq
+from kwking_helper import rq
+from kwking_helper.config import c
 
 
 class PluginError(Exception):

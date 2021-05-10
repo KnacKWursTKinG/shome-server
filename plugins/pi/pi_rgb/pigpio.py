@@ -9,7 +9,9 @@ from typing import Union
 
 import pigpio
 
-from kwking_helper import ClickLogger, thread, c
+from kwking_helper.config import c
+from kwking_helper.logging import CL
+from kwking_helper.thread import threaded2  # @todo: ...
 
 
 class Cache:
@@ -18,7 +20,7 @@ class Cache:
     last_rgbw: dict[str, list[int]] = {}
     default_rgbw: list[int] = json.loads(c.main.get('plugin@pi_rgb', 'default'))
 
-    logger = ClickLogger(
+    logger = CL(
         c.main.get('plugin@pi_rgb', 'log_level'), "Pi_RGB: Cache",
         _file=os.path.expanduser(c.main.get('plugin@pi_rgb', 'log_file', fallback=None))
     )
@@ -68,7 +70,7 @@ class PigpioHandler(Cache):
     def __init__(self):
         super().__init__()
 
-        self.log = ClickLogger(
+        self.log = CL(
             c.main.get('plugin@pi_rgb', 'log_level'), "Pi_RGB: PigpioHandler",
             _file=os.path.expanduser(c.main.get('plugin@pi_rgb', 'log_file', fallback=None))
         )
@@ -91,7 +93,7 @@ class PigpioHandler(Cache):
         del self.pi
         self.pi = pigpio.pi()
 
-    @thread(daemon=False)
+    @threaded2(daemon=False)
     def _set_range(self):
         for section, gpios in c.dict('pi_rgb').get(socket.gethostname(), {}).items():
             self.log.debug(f"set range for section '{section}' to {self._range}")
@@ -100,7 +102,7 @@ class PigpioHandler(Cache):
             for gpio in json.loads(gpios):
                 self.pi.set_PWM_range(int(gpio), self._range)
 
-    @thread(daemon=False)
+    @threaded2(daemon=False)
     def set_dutycycle(self, section: Union[str, int], rgbw: list[int]) -> None:
         self.log.debug(f"set rgbw ({rgbw=}) for {section=}")
 
@@ -112,7 +114,7 @@ class PigpioHandler(Cache):
 
         except Exception as ex:
             self.log.critical(f"[section: {section}] Config Error: {ex}")
-            raise Exception(ex)
+            raise ex
 
         for gpio, value in zip(gpios, rgbw):
             if int(gpio) == 0:
@@ -122,7 +124,7 @@ class PigpioHandler(Cache):
 
         self.cache(section, revert_rgbw(rgbw, self._range))
 
-    @thread(daemon=False)
+    @threaded2(daemon=False)
     def get_dutycycle(self, section: Union[str, int]) -> list[int]:
         self.log.debug(f"get rgbw from {section=}")
 
@@ -134,7 +136,7 @@ class PigpioHandler(Cache):
 
         except Exception as ex:
             self.log.critical(f"[section: {section}] Config Error: {ex}")
-            raise Exception(ex)
+            raise ex
 
         try:
             rgbw = revert_rgbw([self.pi.get_PWM_dutycycle(int(g)) for g in gpios], self._range)

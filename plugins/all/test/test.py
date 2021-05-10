@@ -12,7 +12,7 @@ def sync(timestamp: float) -> float:
 
     try:
         time.sleep(ts)
-    except ValueError:
-        raise SyncError(ts)
+    except ValueError as ex:
+        raise SyncError(ts) from ex
 
     return time.time()

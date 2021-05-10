@@ -4,7 +4,8 @@ import sys
 
 import click
 
-from kwking_helper import c, ClickLogger
+from kwking_helper.config import c
+from kwking_helper.logging import CL
 
 _path = os.path.abspath(__file__).split('/', 2)[0]
 sys.path.insert(0, _path)
@@ -14,7 +15,7 @@ import shomeserver  # NOTE: this will load the configuration
 @click.command()
 @click.option('--host', type=str, default='0.0.0.0', show_default=True)
 @click.option('--port', type=int, default=c.main.get('shomeserver', 'port'), show_default=True)
-@click.option('--log-level', type=click.Choice(ClickLogger.LEVELS),
+@click.option('--log-level', type=click.Choice(CL.LEVELS),
               default=c.main.get('shomeserver', 'log_level'))
 def cli(**kwargs):
     """ DBServer for storing data for network. """

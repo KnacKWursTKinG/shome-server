@@ -9,9 +9,19 @@ from dataclasses import dataclass, field
 
 import requests
 
-from kwking_helper import thread, c, ClickLogger, rq
+from kwking_helper import rq
+from kwking_helper.config import c
+from kwking_helper.logging import CL
+from kwking_helper.thread import threaded2, ThreadData
 
 from pirgb import config
+
+
+logger = CL(c.main.get('pirgb', 'log_level'), 'Cache')
+
+
+def t_log_error(td: ThreadData, ex):
+    logger.error(f"{td.thread.name}: {ex!r}")
 
 
 class CacheError(Exception):
@@ -36,13 +46,12 @@ class Cache:
 
     def __init__(self):
         self.cache_path = config.path[config.platform()]['cache'] + '/cache.pickle'
-        self.logger = ClickLogger(c.main.get('pirgb', 'log_level'), 'Cache')
 
     @property
     def db(self):
         if not c.db:
             try:
-                self.logger.info("[load] try reconnect to dbserver")
+                logger.info("[load] try reconnect to dbserver")
                 c.db = rq.DBServer(
                     c.main.get('dbserver', 'credentials'),
                     c.main.get('dbserver', 'host'),
@@ -50,7 +59,7 @@ class Cache:
                 )
 
             except socket.error:
-                self.logger.warning("[load] dbserver not reachable, using cache for now!")
+                logger.warning("[load] dbserver not reachable, using cache for now!")
 
         return c.db
 
@@ -59,17 +68,17 @@ class Cache:
         with Cache.thread_lock:
             return Cache._cache
 
-    @thread(daemon=False)
+    @threaded2(daemon=False, on_error=t_log_error)
     def load(self):
         # <<- loading data from dbserver and cache
         updated = False
 
         if c.main.getboolean('pirgb', 'use_cache') and os.path.isfile(self.cache_path):
-            self.logger.debug(f"[load] load from cache {self.cache_path=!r}")
+            logger.debug(f"[load] load from cache {self.cache_path=!r}")
             updated = self.__cache_merge(pickle.load(open(self.cache_path, 'rb')))
 
         if c.main.getboolean('pirgb', 'use_db_config') and self.db:
-            self.logger.debug(f"[load] load from dbserver {self.db.url=}")
+            logger.debug(f"[load] load from dbserver {self.db.url=}")
 
             try:
                 r = self.db.get(self.db_group, self.db_label)
@@ -77,7 +86,7 @@ class Cache:
                 if r:
                     updated = self.__cache_merge(pickle.loads(r.content))
                 else:
-                    self.logger.warning(
+                    logger.warning(
                         f"[load] db: {r!r}, '{r.text}'"
                     )
 
@@ -89,27 +98,27 @@ class Cache:
                         _label = f"{host}:{section}"
 
                         if _label not in self.cache:
-                            self.logger.debug(f"[load] {_label=} not in cache, create a new entry")
+                            logger.debug(f"[load] {_label=} not in cache, create a new entry")
                             self.new(_label, groups=['ALL'])
 
             except requests.exceptions.ConnectionError:
-                self.logger.error(
+                logger.error(
                     f"[load] dbserver ({self.db.url=}) not reachable!"
                 )
                 c.db = None
 
             except requests.exceptions.Timeout:
-                self.logger.warning(f"[load] requests timout ({self.db.timeout=})")
+                logger.warning(f"[load] requests timout ({self.db.timeout=})")
 
         if updated:
             self.save()
         # ->>
 
-    @thread(daemon=False)
+    @threaded2(daemon=False, on_error=t_log_error)
     def save(self, skip_cache: bool = False):
         # <<- Save to db and cache
         if c.main.getboolean('pirgb', 'use_db_config') and self.db:
-            self.logger.debug(f"[save] save cache to dbserver {self.db.url=}")
+            logger.debug(f"[save] save cache to dbserver {self.db.url=}")
 
             try:
                 r = self.db.put(
@@ -119,21 +128,21 @@ class Cache:
                 )
 
                 if not r:
-                    self.logger.error(
+                    logger.error(
                         f"[save] Upload cache data to db failed: {r.text} [{r!r}]"
                     )
 
             except requests.exceptions.ConnectionError:
-                self.logger.error(
+                logger.error(
                     f"[save] dbserver ({self.db.url=}) not reachable!"
                 )
                 c.db = None
 
             except requests.exceptions.Timeout:
-                self.logger.warning("[save] requests timout")
+                logger.warning("[save] requests timout")
 
         if c.main.getboolean('pirgb', 'use_cache') and self.cache and not skip_cache:
-            self.logger.debug(f"[save] save cache to {self.cache_path=}")
+            logger.debug(f"[save] save cache to {self.cache_path=}")
 
             if not os.path.isdir(os.path.dirname(self.cache_path)):
                 os.makedirs(os.path.dirname(self.cache_path))
@@ -152,7 +161,7 @@ class Cache:
 
     def update(self, label: str, append: bool = True, **kwargs):
         # <<- update existing label in cache
-        self.logger.debug(f"[update] {label=!r}, {append=!r}, {kwargs=!r}")
+        logger.debug(f"[update] {label=!r}, {append=!r}, {kwargs=!r}")
         item = self.cache[label]
 
         # set kwargs
@@ -165,13 +174,13 @@ class Cache:
                     raise CacheError(f"wrong type for {key!r}: {kwargs[key]!r}")
 
                 if append:
-                    self.logger.debug(f"[update] {key}: append {kwargs[key]=} to {value=}")
+                    logger.debug(f"[update] {key}: append {kwargs[key]=} to {value=}")
                     value.extend(kwargs[key])
                 else:
-                    self.logger.debug(f"[update] set new list for {key=}")
+                    logger.debug(f"[update] set new list for {key=}")
                     value = kwargs[key]
 
-                self.logger.debug(f"[update] {value=}")
+                logger.debug(f"[update] {value=}")
                 #value = list(map(list, set(map(tuple, value))))
                 value = list(set(value))
 
@@ -182,7 +191,7 @@ class Cache:
                 value = kwargs[key]
 
             else:
-                self.logger.debug(f"[update] skip {key=!r}")
+                logger.debug(f"[update] skip {key=!r}")
                 continue
 
             item.__dict__[key] = value

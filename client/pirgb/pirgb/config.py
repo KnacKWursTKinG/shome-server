@@ -2,7 +2,9 @@
 import json
 import os
 
-from kwking_helper import c, rq, thread
+from kwking_helper import rq
+from kwking_helper.config import c
+from kwking_helper.thread import threaded2
 
 
 path = {
@@ -40,7 +42,7 @@ c.read([
 ])
 
 
-@thread(daemon=True)
+@threaded2(daemon=True)
 def load_from_db():
     if not c.main.getboolean('pirgb', 'use_db_config'):
         return
@@ -57,6 +59,6 @@ def load_from_db():
 
         if r:
             c.read_dict(json.loads(r.text), 'pi_rgb')
-    
+
     if 'pi_rgb' not in dir(c):
         c.read_dict({}, 'pi_rgb')

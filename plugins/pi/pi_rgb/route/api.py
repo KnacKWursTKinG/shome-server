@@ -3,14 +3,15 @@ import os
 
 from flask import Blueprint, request, make_response, jsonify
 
-from kwking_helper import ClickLogger, c
+from kwking_helper.config import c
+from kwking_helper.logging import CL
 
 from pi_rgb.pigpio import PigpioHandler
 
 
 api_blueprint = Blueprint('Pi RGB API', __name__)
 pig = PigpioHandler()
-log = ClickLogger(
+log = CL(
     c.main.get('plugin@pi_rgb', 'log_level'),
     name="Pi_RGB: Api Blueprint",
     _file=os.path.expanduser(c.main.get('plugin@pi_rgb', 'log_file', fallback=None))
@@ -41,11 +42,11 @@ def rgbw_set():
                 _threads.append(pig.set_dutycycle(section, rgbw))
 
             for t in _threads:
-                t.join()
-
-                if t.err:
-                    log.critical(f"[/get] Thread: {t.name}, Exception: {t.err!r}")
-                    return make_response(f"Exception: {t.err!r}", 500)
+                try:
+                    t.join()
+                except Exception as ex:
+                    log.critical(f"[/get] Thread: {t.thread.name}, Exception: {t.err!r}")
+                    return make_response(f"Exception: {ex!r}", 500)
 
         return make_response(jsonify(None), 200)
 
@@ -69,11 +70,11 @@ def rgbw_get():
         _threads = [pig.get_dutycycle(section) for section in sections]
 
         for t in _threads:
-            t.join()
-
-            if t.err:
-                log.critical(f"[/get] Thread: {t.name}, Exception: {t.err!r}")
-                return make_response(f"Exception: {t.err!r}", 500)
+            try:
+                t.join()
+            except Exception as ex:
+                log.critical(f"[/get] Thread: {t.thread.name}, Exception: {t.err!r}")
+                return make_response(f"Exception: {ex!r}", 500)
 
         return make_response(
             jsonify([t.ret for t in _threads]), 200
@@ -102,11 +103,11 @@ def rgbw_on():
             _threads.append(pig.set_dutycycle(section, pig.rgbw(section)))
 
         for t in _threads:
-            t.join()
-
-            if t.err:
-                log.critical(f"[/get] Thread: {t.name}, Exception: {t.err!r}")
-                return make_response(f"Exception: {t.err!r}", 500)
+            try:
+                t.join()
+            except Exception as ex:
+                log.critical(f"[/get] Thread: {t.thread.name}, Exception: {t.err!r}")
+                return make_response(f"Exception: {ex!r}", 500)
 
         return make_response(jsonify(None), 200)
 
@@ -133,11 +134,11 @@ def rgbw_off():
             _threads.append(pig.set_dutycycle(section, [0, 0, 0, 0]))
 
         for t in _threads:
-            t.join()
-
-            if t.err:
-                log.critical(f"[/get] Thread: {t.name}, Exception: {t.err!r}")
-                return make_response(f"Exception: {t.err!r}", 500)
+            try:
+                t.join()
+            except Exception as ex:
+                log.critical(f"[/get] Thread: {t.thread.name}, Exception: {t.err!r}")
+                return make_response(f"Exception: {ex!r}", 500)
 
         return make_response(jsonify(None), 200)
 

@@ -3,7 +3,9 @@ import socket
 
 from flask import Flask, render_template, make_response, jsonify, request
 
-from kwking_helper import ClickLogger, c, thread
+from kwking_helper.config import c
+from kwking_helper.logging import CL
+from kwking_helper.thread import threaded2
 
 from pirgb import config
 from pirgb.pirgb import PiRGB
@@ -11,19 +13,12 @@ from pirgb.server.cache import Cache
 
 
 server = Flask(__name__)
-logger = ClickLogger(c.main.get('pirgb', 'log_level'), 'server')
+logger = CL(c.main.get('pirgb', 'log_level'), 'server')
 config.load_from_db().join(1)
 cache = Cache()
 
 
 # <<- Helper Functions
-
-def cache_reload():
-    _t = cache.load()
-    _t.join()
-
-    return _t
-
 
 def get_hosts_for_group(_id) -> list[tuple[str, str]]:
     hosts: list[tuple[str, str]] = list()
@@ -59,7 +54,7 @@ def index():
 @server.route('/html/category/<category>', methods=['GET'])
 def html_category(category: str):
     # <<- return '.control-element' div elements for host:section or group
-    cache_reload()
+    cache.load().thread.join()
     logger.debug(f"['/html/category/{category}']")
 
     template_data: list[tuple[str, str, str]] = list()
@@ -92,17 +87,7 @@ def html_category(category: str):
 def pi_command(command: str):
     # <<- pi commands (get, set, on, ...)
     rdata = request.get_json()
-    _get_return: list[list[int]] = list()
-
-    @thread(daemon=True)
-    def _t_check(_t):
-        _t.join()
-
-        if _t.err:
-            raise Exception(f"pirgb: {command}: {_t.err!r}")
-
-        if _t.ret and command == 'get':
-            _get_return.extend(_t.ret)
+    get_ret: list[list[int]] = list()
 
     try:
         hosts = get_hosts_for_group(rdata.pop('id'))
@@ -122,25 +107,33 @@ def pi_command(command: str):
         except AttributeError:
             return make_response(f'unknown command: {command}', 400)
 
-        _t = func(**{**dict(sections=[section]), **rdata})
-        threads.append(_t_check(_t))
+        threads.append(
+            func(**{**dict(sections=[section]), **rdata})
+        )
 
     for _t in threads:
-        _t.join()
+        try:
+            ret = _t.join()
 
-        if _t.err:
-            return make_response(f"{_t.err}", 500)
+            if ret:
+                get_ret.extend(ret)
+
+        except Exception as ex:
+            return make_response(f"pirgb: {command}: {ex!r}", 500)
 
         del _t
 
-    logger.debug(f"['/pi/{command}'] {_get_return=}")
-    return make_response(jsonify(_get_return or None), 200)
+    logger.debug(f"['/pi/{command}'] {get_ret=}")
+
+    return make_response(
+        jsonify(get_ret or None), 200, {'Content-Type': 'application/json'}
+    )
     # ->>
 
 
 @server.route('/cache', methods=['POST', 'GET'])
 def cache_handler():
-    cache_reload()
+    cache.load().thread.join()
 
     err = (jsonify(None), 200)
 

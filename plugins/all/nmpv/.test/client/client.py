@@ -15,7 +15,7 @@ import requests
 from flask import Flask, Response
 
 from kwking_helper import rq
-from kwking_helper.thread import thread
+from kwking_helper.thread import threaded2
 
 
 class Base:
@@ -45,13 +45,13 @@ class Playlist(Base):
         self.refresh()
 
     def __iter__(self):
-        self.thread.join()
+        self.thread.thread.join()
 
         for _ in self.__cache:
             yield _
 
     def __str__(self):
-        self.thread.join()
+        self.thread.thread.join()
 
         return json.dumps(self.__cache, indent=2)
 
@@ -61,7 +61,7 @@ class Playlist(Base):
 
     @cache.getter
     def cache(self):
-        self.thread.join()
+        self.thread.thread.join()
         return self.__cache
 
     @cache.setter
@@ -69,18 +69,18 @@ class Playlist(Base):
         pass
 
     def __len__(self):
-        self.thread.join()
+        self.thread.thread.join()
         return len(self.__cache)
 
     def refresh(self):
         """ load playlist """
         try:
-            if self.thread.is_alive():
+            if self.thread.thread.is_alive():
                 return
         except Exception:
             self.thread = self.__refresh()
 
-    @thread(True)
+    @threaded2(daemon=True)
     def __refresh(self):
         self.__cache = self.command('playlist')
 

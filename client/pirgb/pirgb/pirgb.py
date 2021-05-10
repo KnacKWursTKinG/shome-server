@@ -1,11 +1,14 @@
 
 import json
-import requests
 import socket
 
 from typing import Union
 
-from kwking_helper import c, thread, rq
+import requests
+
+from kwking_helper import rq
+from kwking_helper.config import c
+from kwking_helper.thread import threaded2
 
 
 class PiRGB():
@@ -18,7 +21,7 @@ class PiRGB():
         self.url = f"http://{self.host}:{self.port}/api"
         self.timeout = 5
 
-    @thread(daemon=True)
+    @threaded2(daemon=True)
     def on(self, sections: list[Union[str, int]]):
         sections = list(set(map(str, sections)))
         r = requests.post(
@@ -32,7 +35,7 @@ class PiRGB():
         if not r:
             raise rq.RQError(r)
 
-    @thread(daemon=True)
+    @threaded2(daemon=True)
     def off(self, sections: list[Union[str, int]]):
         sections = list(set(map(str, sections)))
         r = requests.post(
@@ -46,7 +49,7 @@ class PiRGB():
         if not r:
             raise rq.RQError(r)
 
-    @thread(daemon=True)
+    @threaded2(daemon=True)
     def get(self, sections: list[Union[str, int]]) -> list[list[int]]:
         sections = list(set(map(str, sections)))
         r = requests.post(
@@ -62,7 +65,7 @@ class PiRGB():
 
         raise rq.RQError(r)
 
-    @thread(daemon=True)
+    @threaded2(daemon=True)
     def set(self, sections: list[Union[str, int]], rgbw: Union[tuple[int, ...], list[int]]):
         sections = list(set(map(str, sections)))
         r = requests.post(
@@ -77,7 +80,7 @@ class PiRGB():
         if not r:
             raise rq.RQError(r)
 
-    @thread(daemon=True)
+    @threaded2(daemon=True)
     def bright(self, sections: list[Union[str, int]], bright: int, _calc: str = None):
         sections = list(map(str, sections))
         threads = list()
@@ -93,13 +96,7 @@ class PiRGB():
 
             return old_bright - bright
 
-        t = self.get(*sections)
-        t.join()
-
-        if t.err:
-            raise Exception(t.err)
-
-        rgbw = t.ret
+        rgbw = self.get(*sections).join()
 
         for _section, _rgbw in zip(sections, rgbw):
             if _calc:
@@ -114,6 +111,3 @@ class PiRGB():
 
         for t in threads:
             t.join()
-
-            if t.err:
-                raise Exception(t.err)

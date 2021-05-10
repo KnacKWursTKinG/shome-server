@@ -5,7 +5,10 @@ import time
 
 from multiprocessing import Process
 
-from kwking_helper import ClickLogger, c, thread
+from kwking_helper.config import c
+from kwking_helper.logging import CL
+
+from kwking_helper.thread import threaded2, ThreadData
 
 
 HOSTNAME = socket.gethostname()
@@ -29,7 +32,7 @@ class Motion(Process):
 
         self.timeout: float = 0
 
-        self.logger = ClickLogger(
+        self.logger = CL(
             c.main.get('plugin@pi_pir_motion', 'log_level'),
             'PI_PIR_MOTION: Motion',
             _file=c.main.get('plugin@pi_pir_motion', 'log_file', fallback=None)
@@ -53,7 +56,9 @@ class Motion(Process):
         pi = pigpio.pi()
 
         reuse = time.time()
-        _thread = threading.Thread()
+        _thread = ThreadData(
+            threading.Thread()
+        )
         while True:
             if pi.read(PIN):
                 self.logger.debug(f"[{time.time()}] Motion detected")
@@ -63,7 +68,7 @@ class Motion(Process):
 
                 if REUSE is not None:
                     if time.time() > reuse:
-                        if (REUSE == 0) and not _thread.is_alive():
+                        if (REUSE == 0) and not _thread.thread.is_alive():
                             # run 'onmotion' command
                             self.logger.info(
                                 (
@@ -72,7 +77,7 @@ class Motion(Process):
                                 )
                             )
                             # start timeout method
-                            if TIMEOUT is not None and not _thread.is_alive():
+                            if TIMEOUT is not None and not _thread.thread.is_alive():
                                 _thread = self.wait_for_timeout()
 
                             reuse = time.time() + REUSE
@@ -85,7 +90,7 @@ class Motion(Process):
                         )
                     )
                     # start timeout method
-                    if TIMEOUT is not None and not _thread.is_alive():
+                    if TIMEOUT is not None and not _thread.thread.is_alive():
                         _thread = self.wait_for_timeout()
             else:
                 time.sleep(STEP)
@@ -93,7 +98,7 @@ class Motion(Process):
 
             time.sleep(5)
 
-    @thread(daemon=True)
+    @threaded2(daemon=True)
     def wait_for_timeout(self):
         self.logger.debug("waiting for timeout [thread START]")
 

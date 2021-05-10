@@ -8,7 +8,7 @@ import typing
 
 from mpv import MPV
 
-from kwking_helper import thread
+from kwking_helper.thread import threaded2
 
 
 Player: MPV = None
@@ -18,7 +18,7 @@ DEFAULTS = {
 }
 
 
-@thread(daemon=False)
+@threaded2(daemon=False)
 def run(_conn, _addr, data: bytes):
     global Player
 
@@ -71,6 +71,6 @@ with socket.create_server(('localhost', 5001)) as server:
         print('-' * 80)
         conn, addr = server.accept()
 
-        run(conn, addr, conn.recv(1024 * 100)).join()
+        run(conn, addr, conn.recv(1024 * 100)).thread.join()
 
         conn.close()

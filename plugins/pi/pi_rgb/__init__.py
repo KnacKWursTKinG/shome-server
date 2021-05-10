@@ -5,7 +5,7 @@ import socket
 
 import requests
 
-from kwking_helper import c
+from kwking_helper.config import c
 
 from shomeserver import PluginError
 

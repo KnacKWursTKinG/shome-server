@@ -4,7 +4,8 @@ import sys
 
 from flask import Flask, Blueprint
 
-from kwking_helper import c, ClickLogger
+from kwking_helper.config import c
+from kwking_helper.logging import CL
 
 from shomeserver import PluginError
 from shomeserver.route.base import base_blueprint, api_base_blueprint
@@ -12,7 +13,7 @@ from shomeserver.route.base import base_blueprint, api_base_blueprint
 
 __all__ = ['server']
 
-log = ClickLogger(
+log = CL(
     c.main.get('shomeserver', 'log_level'),
     name="server",
     _file=os.path.expanduser(c.main.get('shomeserver', 'log_file', fallback=None))

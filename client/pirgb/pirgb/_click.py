@@ -9,8 +9,9 @@ import click
 
 from click_aliases import ClickAliasedGroup
 
-from kwking_helper import ClickLogger, c
-from kwking_helper.thread import _Thread
+from kwking_helper.config import c
+from kwking_helper.logging import CL
+from kwking_helper.thread import ThreadData
 
 from pirgb import config
 from pirgb.pirgb import PiRGB
@@ -21,7 +22,7 @@ LOG_FORMAT = "[{level}] {message}"
 
 @dataclass
 class Obj:
-    logger: ClickLogger
+    logger: CL
     port: Optional[int] = None
     pi: set[tuple[str, str]] = field(default_factory=set)
     hosts: set[str] = field(default_factory=set)
@@ -36,7 +37,7 @@ class Obj:
 
 # <<- click.group: cli
 @click.group(cls=ClickAliasedGroup)
-@click.option('-l', '--log-level', type=click.Choice(ClickLogger.LEVELS, False),
+@click.option('-l', '--log-level', type=click.Choice(CL.LEVELS, False),
               default="info", show_default=True,
               help="Change logging level")
 @click.pass_context
@@ -44,7 +45,7 @@ def cli(ctx, **kwargs):
     """ Client (gui&cli) for shomeserver plugin control. """
     c.main.set('pirgb', 'log_level', kwargs['log_level'])
     ctx.obj = Obj(
-        ClickLogger(kwargs['log_level'], 'click', _format=LOG_FORMAT)
+        CL(kwargs['log_level'], 'click', _format=LOG_FORMAT)
     )
 # ->>
 
@@ -120,7 +121,7 @@ def term(obj: Obj, **kwargs):
 @click.pass_obj
 def term_set(obj: Obj, **kwargs):
     """ Set RGBW for pi (ww auto handling) """
-    threads: list[tuple[_Thread, str]] = list()
+    threads: list[tuple[ThreadData, str]] = list()
     rgbw = [kwargs['r'], kwargs['g'], kwargs['b']]
 
     if not kwargs['ww']:
@@ -136,10 +137,10 @@ def term_set(obj: Obj, **kwargs):
             obj.logger.critical(f"[set] server offline: {host}")
 
     for _t, host in threads:
-        _t.join()
-
-        if _t.err:
-            obj.logger.error(f"[set] {host}: {_t.err!r}")
+        try:
+            _t.join()
+        except Exception as ex:
+            obj.logger.error(f"[set] {host}: {ex!r}")
 # ->>
 
 
@@ -148,7 +149,7 @@ def term_set(obj: Obj, **kwargs):
 @click.pass_obj
 def term_get(obj: Obj):
     """ Get RGBW for Sections """
-    threads: list[tuple[_Thread, str, list[str]]] = list()
+    threads: list[tuple[ThreadData, str, list[str]]] = list()
 
     for host in obj.hosts:
         sections = obj.sections(host)
@@ -159,14 +160,13 @@ def term_get(obj: Obj):
             obj.logger.critical(f"[get] server offline: {host}")
 
     for _t, host, sections in threads:
-        _t.join()
-        obj.logger.debug(f"{_t.err=}, {_t.ret=}")
+        try:
+            ret = _t.join()
+        except Exception as ex:
+            obj.logger.error(f"[get] {host}: {ex!r}")
 
-        if _t.err:
-            obj.logger.error(f"[get] {host}: {_t.err!r}")
-
-        elif _t.ret:
-            for _section, _rgbw in zip(sections, _t.ret):
+        if ret:
+            for _section, _rgbw in zip(sections, ret):
                 obj.logger.info(f"{host}:{_section} {_rgbw}")
 # ->>
 
@@ -176,7 +176,7 @@ def term_get(obj: Obj):
 @click.pass_obj
 def term_on(obj: Obj):
     """ RGBW On """
-    threads: list[tuple[_Thread, str]] = list()
+    threads: list[tuple[ThreadData, str]] = list()
 
     for host in obj.hosts:
         try:
@@ -185,10 +185,10 @@ def term_on(obj: Obj):
             obj.logger.critical(f"[on] server offline: {host}")
 
     for _t, host in threads:
-        _t.join()
-
-        if _t.err:
-            obj.logger.error(f"[on] {host}: {_t.err!r}")
+        try:
+            _t.join()
+        except Exception as ex:
+            obj.logger.error(f"[on] {host}: {ex!r}")
 # ->>
 
 
@@ -197,7 +197,7 @@ def term_on(obj: Obj):
 @click.pass_obj
 def term_off(obj: Obj):
     """ RGBW Off """
-    threads: list[tuple[_Thread, str]] = list()
+    threads: list[tuple[ThreadData, str]] = list()
 
     for host in obj.hosts:
         try:
@@ -206,10 +206,10 @@ def term_off(obj: Obj):
             obj.logger.critical(f"[off] server offline: {host}")
 
     for _t, host in threads:
-        _t.join()
-
-        if _t.err:
-            obj.logger.error(f"[off] {host}: {_t.err!r}")
+        try:
+            _t.join()
+        except Exception as ex:
+            obj.logger.error(f"[off] {host}: {ex!r}")
 # ->>
 
 
@@ -221,7 +221,7 @@ def term_off(obj: Obj):
 @click.pass_obj
 def term_bright(obj: Obj, **kwargs):
     """ Change Brightness for RGBW (in '%') """
-    threads: list[tuple[_Thread, str]] = list()
+    threads: list[tuple[ThreadData, str]] = list()
     _calc = None
 
     if kwargs['increase']:
@@ -250,8 +250,8 @@ def term_bright(obj: Obj, **kwargs):
             obj.logger.critical(f"[bright] server offline: {host}")
 
     for _t, host in threads:
-        _t.join()
-
-        if _t.err:
-            obj.logger.error(f"[on] {host}: {_t.err!r}")
+        try:
+            _t.join()
+        except Exception as ex:
+            obj.logger.error(f"[on] {host}: {ex!r}")
 # ->>
