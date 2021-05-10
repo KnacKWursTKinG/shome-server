@@ -2,18 +2,14 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from kwking_helper.logging import CL
+from kwking_helper.logging import CL  # type: ignore
 
 from nmpvc.base import MPV
 
 
 @dataclass
 class _PL:
-    url: list[str] = field(default_factory=list)
     mpv: Optional[MPV] = None
-
-    def add(self, url: str):
-        self.url.append(str(url))
 
 
 @dataclass
@@ -24,6 +20,7 @@ class _SMB:
     password: str
     port: int = 139
     path: str = '/'
+    files: list[str] = field(default_factory=list)
 
     def url(self, file):
         return "smb://{}:{}@{}/{}/{}".format(
@@ -31,6 +28,9 @@ class _SMB:
             self.server, self.share,
             f"{self.path}/{file.lstrip('/')}".lstrip('/')
         )
+
+    def add(self, file: str):
+        self.files.append(str(file))
 
 
 @dataclass

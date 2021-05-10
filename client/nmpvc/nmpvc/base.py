@@ -1,12 +1,11 @@
 
 import json
-import socket
 
 from typing import Any
 
 import requests
 
-from kwking_helper import rq
+from kwking_helper import rq  # type: ignore
 
 
 class MPVBase:
@@ -28,7 +27,10 @@ class MPVBase:
         if resp.status_code != 200:
             raise rq.RQError(resp)
 
-        return json.loads(resp.text) if "application/json" in resp.headers.get('Content-Type') else None
+        if "application/json" in resp.headers.get('Content-Type', ''):
+            return json.loads(resp.text)
+
+        return None
 
     def run(self, server: str, name: str, *args, **kwargs):
         return self.send(
@@ -60,12 +62,13 @@ class MPVBase:
 
 class MPV:
     def __init__(self, *addr: tuple[str, int]):
-        self._addr = list(addr)
         self.base: dict[str, MPVBase] = dict()
+
+        self.addr = list(addr)
 
     @property
     def addr(self):
-        return self._addr
+        return [(host, self.base[host].port) for host in self.base]
 
     @addr.setter
     def addr(self, addr: list[tuple[str, int]]):

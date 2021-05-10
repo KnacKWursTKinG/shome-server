@@ -1,15 +1,17 @@
 
 import re
+import socket
 import sys
 
 from typing import Optional
 
 import click
-import click_aliases
+import click_aliases  # type: ignore
 
-from smb.SMBConnection import SMBConnection
+from smb.SMBConnection import SMBConnection  # type: ignore
 
-from .pl import pl_append
+from nmpvc.base import MPV
+
 from . import _Cache, _SMB, Cache
 
 
@@ -37,6 +39,14 @@ def cli_smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]]):
     )
 
 
+@cli_smb.command('list', aliases=['ls'])
+@click.argument('path')
+@click.pass_obj
+def smb_list(obj: _Cache, path: str):
+    """ List/Browse samba share """
+    ...
+
+
 @cli_smb.group('search', aliases=['s'], invoke_without_command=True)
 @click.option('-s', '--sort', type=click.Choice(['write', 'name', 'lazy']), help="sort files")
 @click.option('-m', '--max-matches', type=int, help="max number for matches")
@@ -49,6 +59,12 @@ def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
     if not isinstance(obj.smb, _SMB):
         raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
 
+    def _add(obj, matches: list):
+        for _file in matches[:max_matches]:
+            url = obj.smb.url(_file)
+            click.echo(_file)
+            obj.smb.add(url)
+
     regex = re.compile(file)
     matches: list = list()
 
@@ -60,7 +76,7 @@ def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
         # search in path for matching files
         for _file in cli.listPath(obj.smb.share, obj.smb.path):
             # skip hidden files
-            if _file.filename[0] == '.':
+            if _file.filename[0] == '.' or _file.isDirectory:
                 continue
 
             match = re.match(regex, _file.filename)
@@ -68,10 +84,17 @@ def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
             if match:
                 matches.append(_file)
 
-    # sort, add, print
+    if sort == 'name':
+        # sort
+        matches = [f.filename for f in matches]
+        matches.sort()
+
+        return _add(obj, matches)
+
     if sort == 'write':
         # sort
         _matches: list = list()
+
         for _match in matches:
             for idx, _sorted_match in enumerate(_matches):
                 if _match.last_write_time > _sorted_match.last_write_time:
@@ -80,31 +103,31 @@ def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
             else:
                 _matches.append(_match)
 
-        del matches
+        matches = _matches
+        del _matches
 
-        # add, print
-        for _match in _matches[:max_matches]:
-            url = obj.smb.url(_match.filename)
-            click.echo(_match.filename)
-            obj.pl.add(url)
-
-    elif sort == 'name':
-        # sort
-        matches = [f.filename for f in matches]
-        matches.sort()
-
-        # add, print
-        for _match in matches[:max_matches]:
-            url = obj.smb.url(_match)
-            click.echo(_match)
-            obj.pl.add(url)
-
-    else:
-        # add, print
-        for _match in matches[:max_matches]:
-            url = obj.smb.url(_match.filename)
-            click.echo(_match.filename)
-            obj.pl.add(url)
+    return _add(obj, [f.filename for f in matches])
 
 
-smb_search.add_command(pl_append)
+@smb_search.command('append')
+@click.option('-s', '--server', metavar="<server>", multiple=True,
+              help="shomeserver host [multiple: True]")
+@click.option('-p', '--port', metavar="<port>", type=int, default=50870, show_default=True,
+              help="shomeserver port")
+@click.pass_obj
+def search_append(obj: _Cache, server: tuple[str], port: int):
+    """ Append/Add new file """
+    obj.logger.name = 'append'
+
+    if not isinstance(obj.smb, _SMB):
+        raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
+
+    if not isinstance(obj.pl.mpv, MPV):
+        try:
+            obj.pl.mpv = MPV(*[(_host, port) for _host in server])
+        except socket.gaierror as ex:
+            obj.logger.error(f"{ex}")
+            sys.exit(1)
+
+    while (file := obj.smb.files.pop(0) if obj.smb.files else None):
+        obj.pl.mpv.run('playlist_append', file)
