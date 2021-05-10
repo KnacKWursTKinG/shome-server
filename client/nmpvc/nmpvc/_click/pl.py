@@ -25,4 +25,4 @@ def pl_append(obj: _Cache):
         raise TypeError(f"expect {type(MPV)} for 'obj.smb', got {type(obj.pl.mpv)}")
 
     for url in obj.pl.url:
-        obj.pl.mpv.run_method('playlist_append', url)
+        obj.pl.mpv.run('playlist_append', url)

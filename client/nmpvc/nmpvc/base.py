@@ -16,7 +16,7 @@ class MPVBase:
     def url(self, server: str):
         return f"http://{server}:{self.port}/api/nmpv/player"
 
-    def send_data(self, server: str, data: Any):
+    def send(self, server: str, data: Any):
         resp = requests.post(
             self.url(server),
             json.loads(data),
@@ -30,8 +30,8 @@ class MPVBase:
 
         return json.loads(resp.text) if "application/json" in resp.headers.get('Content-Type') else None
 
-    def run_method(self, server: str, name: str, *args, **kwargs):
-        return self.send_data(
+    def run(self, server: str, name: str, *args, **kwargs):
+        return self.send(
             server,
             {
                 "attr": str(name),
@@ -40,8 +40,8 @@ class MPVBase:
             }
         )
 
-    def set_prop(self, server: str, prop: str, value: Any):
-        return self.send_data(
+    def set(self, server: str, prop: str, value: Any):
+        return self.send(
             server,
             {
                 "attr": str(prop),
@@ -49,8 +49,8 @@ class MPVBase:
             }
         )
 
-    def get_prop(self, server: str, prop: str):
-        return self.send_data(
+    def get(self, server: str, prop: str):
+        return self.send(
             server,
             {
                 "attr": str(prop)
@@ -60,18 +60,26 @@ class MPVBase:
 
 class MPV:
     def __init__(self, *addr: tuple[str, int]):
+        self._addr = list(addr)
         self.base: dict[str, MPVBase] = dict()
 
+    @property
+    def addr(self):
+        return self._addr
+
+    @addr.setter
+    def addr(self, addr: list[tuple[str, int]]):
         for server, port in addr:
+            if server in self.base:
+                del self.base[server]
+
             self.base[server] = MPVBase(int(port))
 
-    def run_method(self, name: str, *args, **kwargs):
+    def run(self, name: str, *args, **kwargs):
         ...
 
-    def __setattr__(self, name: str, value: Any):
-        print(f"__setattr__ ({name=}, {value=})")
+    def set(self, name: str, value: Any):
         ...
 
-    def __getattr__(self, name: str):
-        print(f"__getattr__ ({name=})")
+    def get(self, name: str):
         ...
