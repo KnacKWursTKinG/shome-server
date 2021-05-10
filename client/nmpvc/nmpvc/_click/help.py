@@ -11,7 +11,7 @@ import click_aliases
 def cli_help(ctx):
     """ search for methods or attributes in `mpv.MPV` """
     with open(__file__.rsplit('/', 1)[0] + '/mpv-help.pickle', 'rb') as file:
-        ctx.obj = pickle.load(file)
+        ctx.obj.help = pickle.load(file)
 
 
 @cli_help.command('search', aliases=['s'])
@@ -21,11 +21,11 @@ def cli_help(ctx):
 def help_search(obj, short: bool, name: str):
     """ Search for an attribute """
     matches = list()
-    for _key, _value in obj['method'].items():
+    for _key, _value in obj.help['method'].items():
         if name in _key:
             matches.append((_key, _value))
 
-    for _key, _value in obj['property'].items():
+    for _key, _value in obj.help['property'].items():
         if name in _key:
             matches.append((_key, _value))
 
@@ -45,14 +45,14 @@ def help_search(obj, short: bool, name: str):
 @click.pass_obj
 def help_info(obj, name: str):
     """ get info for attribute """
-    for _key in obj['method']:
+    for _key in obj.help['method']:
         if _key == name:
             click.echo(_key)
             click.echo('-' * len(_key))
-            click.echo(f"{pprint.pformat(obj['method'][_key])}")
+            click.echo(f"{pprint.pformat(obj.help['method'][_key])}")
 
-    for _key in obj['property']:
+    for _key in obj.help['property']:
         if _key == name:
             click.echo(_key)
             click.echo('-' * len(_key))
-            click.echo(f"{pprint.pformat(obj['property'][_key])}")
+            click.echo(f"{pprint.pformat(obj.help['property'][_key])}")

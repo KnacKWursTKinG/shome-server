@@ -42,3 +42,11 @@ class MPVBase:
         return self.send_data({
             "attr": str(prop)
         })
+
+
+class MPV:
+    def __init__(self, *addr: tuple[str, int]):
+        self.base: dict[str, MPVBase] = dict()
+
+        for server, port in addr:
+            self.base[server] = MPVBase(server, int(port))

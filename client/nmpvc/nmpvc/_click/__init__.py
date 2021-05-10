@@ -8,6 +8,7 @@ from kwking_helper.logging import CL
 @dataclass
 class _PL:
     url: list[str] = field(default_factory=list)
+    addr: list[tuple[str, int]] = field(default_factory=list)
 
     def add(self, url: str):
         self.url.append(str(url))
@@ -34,6 +35,7 @@ class _SMB:
 class _Cache:
     pl = _PL()
     smb: Optional[_SMB] = None
+    help = None
     _cl = CL('warning', __name__)
 
     @property

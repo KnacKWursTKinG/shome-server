@@ -14,21 +14,15 @@ from . import _Cache, _SMB, Cache
 
 
 @click.group('smb', cls=click_aliases.ClickAliasedGroup)
-@click.option('--debug', is_flag=True, default=False, help="enable debug messages")
 @click.option('-p', '--path', default='/', show_default=True, help="chang root path")
 @click.option('-c', '--credentials', nargs=4,
               metavar="<server> <share> <username> <password>",
               help="samba credentials")
 @click.pass_context
-def cli_smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]], debug: bool):
+def cli_smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]]):
     """ Sambe Browser """
     if not ctx.obj:
         ctx.obj = Cache
-
-    if debug:
-        ctx.obj.logger.level = 'debug'
-    else:
-        ctx.obj.logger.level = 'warning'
 
     ctx.obj.logger.name = 'smb'
 
@@ -50,7 +44,7 @@ def cli_smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]], de
 @click.pass_obj
 def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
     """ Search samba server for file(s) (python regex support) """
-    obj.logger.name = 'search'
+    #obj.logger.name = 'search'
 
     if not isinstance(obj.smb, _SMB):
         raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
