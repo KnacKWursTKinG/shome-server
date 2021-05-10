@@ -23,6 +23,7 @@ setup(
     install_requires=[
         'requests',
         'dill',
+        'pysmb'
         'click',
         'click-aliases',
         'flask',
