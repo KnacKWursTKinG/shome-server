@@ -6,6 +6,7 @@ from typing import Any
 import requests
 
 from kwking_helper import rq  # type: ignore
+from kwking_helper.thread import threaded2, ThreadData  # type: ignore
 
 
 class MPVError(Exception):
@@ -85,11 +86,39 @@ class MPV:
 
             self.base[server] = MPVBase(int(port))
 
-    def run(self, name: str, *args, **kwargs):
-        ...
+    def _threads(self, threads: list[tuple[str, ThreadData]]):
+        ret = list()
+        for server, _thread in threads:
+            try:
+                ret.append((server, _thread.join()))
+            except Exception as ex:
+                ret.append((server, ex))
+
+        return ret
+
+    def run(self, name: str, *args, **kwargs) -> list[tuple[str, Any]]:
+        @threaded2(daemon=True)
+        def _run(server: str, base: MPVBase):
+            return base.run(server, name, *args, **kwargs)
+
+        return self._threads(
+            [(server, _run(server, base)) for server, base in self.base.items()]
+        )
 
     def set(self, name: str, value: Any):
-        ...
+        @threaded2(daemon=True)
+        def _set(server: str, base: MPVBase):
+            return base.set(server, name, value)
+
+        return self._threads(
+            [(server, _set(server, base)) for server, base in self.base.items()]
+        )
 
     def get(self, name: str):
-        ...
+        @threaded2(daemon=True)
+        def _get(server: str, base: MPVBase):
+            return base.get(server, name)
+
+        return self._threads(
+            [(server, _get(server, base)) for server, base in self.base.items()]
+        )
