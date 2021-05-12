@@ -24,6 +24,7 @@ def cli_pl(ctx, server: tuple[str], port: int):
     ctx.obj.logger.name = 'pl'
 
     try:
+        # @todo: MPV class changed
         ctx.obj.pl.mpv = MPV(*[(_host, port) for _host in server])
     except socket.gaierror as ex:
         ctx.obj.logger.error(f"{ex}")
