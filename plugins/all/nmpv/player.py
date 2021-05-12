@@ -5,10 +5,10 @@ import time
 
 from typing import Optional, Any, Callable
 
-import mpv
+import mpv  # type: ignore
 
-from kwking_helper.config import c
-from kwking_helper.logging import CL
+from kwking_helper.config import c  # type: ignore
+from kwking_helper.logging import CL  # type: ignore
 
 
 class SyncError(Exception):

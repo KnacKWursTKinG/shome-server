@@ -2,7 +2,7 @@
 import types
 import json
 
-from typing import Optional, Any
+from typing import Any
 
 from flask import Blueprint, request, Response
 
@@ -15,7 +15,6 @@ blueprint = Blueprint('MPV', __name__)
 @blueprint.route('/player', methods=['POST'])
 def index():
     resp: Response
-    sync: Optional[float] = float(request.args['sync']) if 'sync' in request.args else None
     ret_data: Any = None
 
     if 'application/json' in request.headers.get('Content-Type'):
@@ -27,7 +26,7 @@ def index():
                 resp = Response("'attr' missing", status=400)
 
             else:
-                with Player(sync) as player:
+                with Player(req_data.get('sync', None)) as player:
                     _attr = player.getattr(req_data['attr'])
 
                     if isinstance(_attr, types.MethodType):

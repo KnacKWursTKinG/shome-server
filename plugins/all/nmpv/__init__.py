@@ -3,7 +3,7 @@
 Github: 'https://github.com/jaseg/python-mpv'
 """
 
-from kwking_helper.config import c
+from kwking_helper.config import c  # type: ignore
 
 if 'plugin@nmpv' not in c.main.sections():
     # load default/fallback config
