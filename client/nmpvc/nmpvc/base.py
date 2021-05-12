@@ -8,6 +8,13 @@ import requests
 from kwking_helper import rq  # type: ignore
 
 
+class MPVError(Exception):
+    def __init__(self, status_code: int, *server):
+        super().__init__(f"[{status_code}] {', '.join(server)}")
+        self.status_code = status_code
+        self.server = server
+
+
 class MPVBase:
     def __init__(self, port: int = 50870):
         self.port = port

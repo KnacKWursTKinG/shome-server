@@ -10,7 +10,7 @@ import click_aliases  # type: ignore
 
 from smb.SMBConnection import SMBConnection  # type: ignore
 
-from nmpvc.base import MPV
+from nmpvc.base import MPV, MPVError
 
 from . import _Cache, _SMB, Cache
 
@@ -44,7 +44,22 @@ def cli_smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]]):
 @click.pass_obj
 def smb_list(obj: _Cache, path: str):
     """ List/Browse samba share """
-    ...
+    #obj.logger.name = 'list'
+
+    if not isinstance(obj.smb, _SMB):
+        raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
+
+    with SMBConnection(obj.smb.username, obj.smb.password,
+                       obj.smb.server, obj.smb.server) as cli:
+
+        cli.connect(obj.smb.server, obj.smb.port)
+
+        for _file in cli.listPath(obj.smb.share, f"{obj.smb.path.rstrip('/')}/{path.lstrip('/')}"):
+            # skip hidden files
+            if _file.filename[0] == '.':
+                continue
+
+            click.echo(f"{_file.filename}{'/' if _file.isDirectory else ''}")
 
 
 @cli_smb.group('search', aliases=['s'], invoke_without_command=True)
@@ -129,5 +144,10 @@ def search_append(obj: _Cache, server: tuple[str], port: int):
             obj.logger.error(f"{ex}")
             sys.exit(1)
 
-    while (file := obj.smb.files.pop(0) if obj.smb.files else None):
-        obj.pl.mpv.run('playlist_append', file)
+    try:
+        while (file := obj.smb.files.pop(0) if obj.smb.files else None):
+            obj.pl.mpv.run('playlist_append', file)
+
+    except MPVError as ex:
+        obj.logger.error(f"{ex}")
+        sys.exit(1)
