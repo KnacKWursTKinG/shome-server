@@ -13,7 +13,7 @@ class MPV:
     def __init__(self, *addr: Union[str, tuple[str, int]], sync: bool = True):
         self._port = 50870
         self.sync = bool(sync)
-        self.addr = list(addr)  # type: igonre
+        self.addr = list(addr)
 
     @property
     def addr(self) -> list[tuple[str, int]]:
