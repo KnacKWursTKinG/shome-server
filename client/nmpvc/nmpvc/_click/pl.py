@@ -13,14 +13,40 @@ from . import _Cache, _SMB, Cache
 @click.pass_obj
 def on_success(obj: _Cache):
     """ @todo ... """
-    ...
+    to_delete = list()
+
+    for td in obj.pl.td:
+        try:
+            ret = td.join()
+            to_delete.append(td)
+
+            ...
+
+        except Exception as ex:
+            continue
+
+
+    for td in to_delete:
+        obj.pl.td.remove(td)
 
 
 @click.command('on-error')
 @click.pass_obj
 def on_error(obj: _Cache):
     """ @todo ... """
-    ...
+    to_delete = list()
+
+    for td in obj.pl.td:
+        try:
+            td.join()
+            continue
+
+        except Exception as ex:
+            to_delete.append(td)
+            ...
+
+    for td in to_delete:
+        obj.pl.td.remove(td)
 
 
 @click.group('append', invoke_without_command=True, chain=True)
