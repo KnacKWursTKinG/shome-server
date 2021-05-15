@@ -11,6 +11,7 @@ import click_aliases  # type: ignore
 from smb.SMBConnection import SMBConnection  # type: ignore
 
 from nmpvc.base import MPV
+from nmpvc._click import pl
 
 from . import _Cache, _SMB, Cache
 
@@ -124,29 +125,4 @@ def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
     return _add(obj, [f.filename for f in matches])
 
 
-@smb_search.command('append')
-@click.option('-s', '--server', metavar="<server>", multiple=True,
-              help="shomeserver host [multiple: True]")
-@click.option('-p', '--port', metavar="<port>", type=int, default=50870, show_default=True,
-              help="shomeserver port")
-@click.pass_obj
-def search_append(obj: _Cache, server: tuple[str], port: int):
-    """ Append/Add new file """
-    obj.logger.name = 'append'
-
-    if not isinstance(obj.smb, _SMB):
-        raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
-
-    if not isinstance(obj.pl.mpv, MPV):
-        try:
-            obj.pl.mpv = MPV(*[(_host, port) for _host in server])
-        except socket.gaierror as ex:
-            obj.logger.error(f"{ex}")
-            sys.exit(1)
-
-    while (file := obj.smb.files.pop(0) if obj.smb.files else None):
-        for _host, _data in obj.pl.mpv.run('playlist_append', file):
-            if isinstance(_data, Exception):
-                obj.logger.name = _host
-                obj.logger.error(f"{_data!r}")
-                sys.exit(1)
+smb_search.add_command(pl.smb_append)
