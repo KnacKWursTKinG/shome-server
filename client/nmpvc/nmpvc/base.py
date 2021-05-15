@@ -1,5 +1,6 @@
 
 import json
+import socket
 
 from typing import Any, Union
 
@@ -25,9 +26,9 @@ class MPV:
 
         for _addr in addr:
             if isinstance(_addr, str):
-                self._addr.append((_addr, self._port))
+                self._addr.append((socket.gethostbyname(_addr), self._port))
             elif isinstance(_addr, tuple):
-                self._addr.append((_addr[0], _addr[1]))
+                self._addr.append((socket.gethostbyname(_addr[0]), _addr[1]))
             else:
                 raise ValueError("'addr' should contain tuples with host and port")
 
