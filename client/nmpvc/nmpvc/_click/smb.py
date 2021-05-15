@@ -1,6 +1,5 @@
 
 import re
-import socket
 import sys
 
 from typing import Optional
@@ -10,7 +9,6 @@ import click_aliases  # type: ignore
 
 from smb.SMBConnection import SMBConnection  # type: ignore
 
-from nmpvc.base import MPV
 from nmpvc._click import pl
 
 from . import _Cache, _SMB, Cache
@@ -22,7 +20,7 @@ from . import _Cache, _SMB, Cache
               metavar="<server> <share> <username> <password>",
               help="samba credentials")
 @click.pass_context
-def cli_smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]]):
+def smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]]):
     """ Sambe Browser """
     if not ctx.obj:
         ctx.obj = Cache
@@ -40,7 +38,7 @@ def cli_smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]]):
     )
 
 
-@cli_smb.command('list', aliases=['ls'])
+@smb.command('list', aliases=['ls'])
 @click.argument('path')
 @click.pass_obj
 def smb_list(obj: _Cache, path: str):
@@ -63,7 +61,7 @@ def smb_list(obj: _Cache, path: str):
             click.echo(f"{_file.filename}{'/' if _file.isDirectory else ''}")
 
 
-@cli_smb.group('search', aliases=['s'], invoke_without_command=True)
+@smb.group('search', aliases=['s'], invoke_without_command=True)
 @click.option('-s', '--sort', type=click.Choice(['write', 'name', 'lazy']), help="sort files")
 @click.option('-m', '--max-matches', type=int, help="max number for matches")
 @click.argument('file')
