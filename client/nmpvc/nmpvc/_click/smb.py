@@ -10,7 +10,7 @@ import click_aliases  # type: ignore
 
 from smb.SMBConnection import SMBConnection  # type: ignore
 
-from nmpvc.base import MPV, MPVError
+from nmpvc.base import MPV
 
 from . import _Cache, _SMB, Cache
 
@@ -139,19 +139,14 @@ def search_append(obj: _Cache, server: tuple[str], port: int):
 
     if not isinstance(obj.pl.mpv, MPV):
         try:
-            # @todo: MPV class changed
             obj.pl.mpv = MPV(*[(_host, port) for _host in server])
         except socket.gaierror as ex:
             obj.logger.error(f"{ex}")
             sys.exit(1)
 
-    try:
-        while (file := obj.smb.files.pop(0) if obj.smb.files else None):
-            # @todo: will return a list with tuple[addr, return or exception]
-            # @todo: create a threaded2 function with on_error handler function (???)
-            obj.pl.mpv.run('playlist_append', file)
-
-    # @todo: changed error handling (type check on MPV return data)
-    except MPVError as ex:
-        obj.logger.error(f"{ex}")
-        sys.exit(1)
+    while (file := obj.smb.files.pop(0) if obj.smb.files else None):
+        for _host, _data in obj.pl.mpv.run('playlist_append', file):
+            if isinstance(_data, Exception):
+                obj.logger.name = _host
+                obj.logger.error(f"{_data!r}")
+                sys.exit(1)
