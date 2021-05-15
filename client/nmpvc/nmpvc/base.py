@@ -14,7 +14,7 @@ class MPV:
     def __init__(self, *addr: Union[str, tuple[str, int]], sync: bool = True):
         self._port = 50870
         self.sync = bool(sync)
-        self.addr = list(addr)
+        self.addr = list(addr)  # type: ignore
 
     @property
     def addr(self) -> list[tuple[str, int]]:
@@ -85,7 +85,7 @@ class MPV:
             }
         )
 
-    def _threads(self, threads: list[tuple[tuple[str, int], ThreadData]]):
+    def _threads(self, threads: list[tuple[str, ThreadData]]) -> list[tuple[str, Any]]:
         ret = list()
         for server, _thread in threads:
             try:
@@ -99,15 +99,15 @@ class MPV:
 
     def run(self, name: str, *args, **kwargs) -> list[tuple[str, Any]]:
         return self._threads(
-            [(addr, self._run(addr, name, *args, **kwargs)) for addr in self.addr]
+            [(f"{addr[0]}:{addr[1]}", self._run(addr, name, *args, **kwargs)) for addr in self.addr]
         )
 
-    def set(self, name: str, value: Any):
+    def set(self, name: str, value: Any) -> list[tuple[str, Any]]:
         return self._threads(
-            [(addr, self._set(addr, name, value)) for addr in self.addr]
+            [(f"{addr[0]}:{addr[1]}", self._set(addr, name, value)) for addr in self.addr]
         )
 
-    def get(self, name: str):
+    def get(self, name: str) -> list[tuple[str, Any]]:
         return self._threads(
-            [(addr, self._get(addr, name)) for addr in self.addr]
+            [(f"{addr[0]}:{addr[1]}", self._get(addr, name)) for addr in self.addr]
         )
