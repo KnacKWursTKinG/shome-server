@@ -1,0 +1,546 @@
+{
+    "command": {
+        "name": "cli",
+        "params": [
+            {
+                "name": "log_level",
+                "param_type_name": "option",
+                "opts": [
+                    "-l",
+                    "--log-level"
+                ],
+                "secondary_opts": [],
+                "type": {
+                    "param_type": "Choice",
+                    "name": "choice",
+                    "choices": [
+                        "debug",
+                        "info",
+                        "warning",
+                        "error",
+                        "critical",
+                        "silent"
+                    ],
+                    "case_sensitive": false
+                },
+                "required": false,
+                "nargs": 1,
+                "multiple": false,
+                "default": "info",
+                "envvar": null,
+                "help": "Change logging level",
+                "prompt": null,
+                "is_flag": false,
+                "flag_value": false,
+                "count": false,
+                "hidden": false
+            },
+            {
+                "name": "help",
+                "param_type_name": "option",
+                "opts": [
+                    "--help"
+                ],
+                "secondary_opts": [],
+                "type": {
+                    "param_type": "Bool",
+                    "name": "boolean"
+                },
+                "required": false,
+                "nargs": 1,
+                "multiple": false,
+                "default": false,
+                "envvar": null,
+                "help": "Show this message and exit.",
+                "prompt": null,
+                "is_flag": true,
+                "flag_value": true,
+                "count": false,
+                "hidden": false
+            }
+        ],
+        "help": "Client (gui&cli) for shomeserver plugin control. ",
+        "epilog": null,
+        "short_help": null,
+        "hidden": false,
+        "deprecated": false,
+        "commands": {
+            "cli": {
+                "name": "cli",
+                "params": [
+                    {
+                        "name": "pi",
+                        "param_type_name": "option",
+                        "opts": [
+                            "-p",
+                            "--pi"
+                        ],
+                        "secondary_opts": [],
+                        "type": {
+                            "param_type": "String",
+                            "name": "text"
+                        },
+                        "required": false,
+                        "nargs": 1,
+                        "multiple": true,
+                        "default": null,
+                        "envvar": null,
+                        "help": "Pi to control [default-section: 1] [multiple: True]",
+                        "prompt": null,
+                        "is_flag": false,
+                        "flag_value": true,
+                        "count": false,
+                        "hidden": false
+                    },
+                    {
+                        "name": "port",
+                        "param_type_name": "option",
+                        "opts": [
+                            "--port"
+                        ],
+                        "secondary_opts": [],
+                        "type": {
+                            "param_type": "Int",
+                            "name": "integer"
+                        },
+                        "required": false,
+                        "nargs": 1,
+                        "multiple": false,
+                        "default": 50870,
+                        "envvar": null,
+                        "help": "Change default shomeserver port",
+                        "prompt": null,
+                        "is_flag": false,
+                        "flag_value": false,
+                        "count": false,
+                        "hidden": false
+                    },
+                    {
+                        "name": "help",
+                        "param_type_name": "option",
+                        "opts": [
+                            "--help"
+                        ],
+                        "secondary_opts": [],
+                        "type": {
+                            "param_type": "Bool",
+                            "name": "boolean"
+                        },
+                        "required": false,
+                        "nargs": 1,
+                        "multiple": false,
+                        "default": false,
+                        "envvar": null,
+                        "help": "Show this message and exit.",
+                        "prompt": null,
+                        "is_flag": true,
+                        "flag_value": true,
+                        "count": false,
+                        "hidden": false
+                    }
+                ],
+                "help": "Terminal Client [chain: True] ",
+                "epilog": null,
+                "short_help": null,
+                "hidden": false,
+                "deprecated": false,
+                "commands": {
+                    "bright": {
+                        "name": "bright",
+                        "params": [
+                            {
+                                "name": "increase",
+                                "param_type_name": "option",
+                                "opts": [
+                                    "-i",
+                                    "--increase"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "Bool",
+                                    "name": "boolean"
+                                },
+                                "required": false,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": false,
+                                "envvar": null,
+                                "help": "increase brightness",
+                                "prompt": null,
+                                "is_flag": true,
+                                "flag_value": true,
+                                "count": false,
+                                "hidden": false
+                            },
+                            {
+                                "name": "decrease",
+                                "param_type_name": "option",
+                                "opts": [
+                                    "-d",
+                                    "--decrease"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "Bool",
+                                    "name": "boolean"
+                                },
+                                "required": false,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": false,
+                                "envvar": null,
+                                "help": "decrease brightness",
+                                "prompt": null,
+                                "is_flag": true,
+                                "flag_value": true,
+                                "count": false,
+                                "hidden": false
+                            },
+                            {
+                                "name": "brightness",
+                                "param_type_name": "argument",
+                                "opts": [
+                                    "brightness"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "IntRange",
+                                    "name": "integer range",
+                                    "min": 0,
+                                    "max": 100,
+                                    "min_open": false,
+                                    "max_open": false,
+                                    "clamp": false
+                                },
+                                "required": true,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": null,
+                                "envvar": null
+                            },
+                            {
+                                "name": "help",
+                                "param_type_name": "option",
+                                "opts": [
+                                    "--help"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "Bool",
+                                    "name": "boolean"
+                                },
+                                "required": false,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": false,
+                                "envvar": null,
+                                "help": "Show this message and exit.",
+                                "prompt": null,
+                                "is_flag": true,
+                                "flag_value": true,
+                                "count": false,
+                                "hidden": false
+                            }
+                        ],
+                        "help": "Change Brightness for RGBW (in '%') ",
+                        "epilog": null,
+                        "short_help": null,
+                        "hidden": false,
+                        "deprecated": false
+                    },
+                    "get": {
+                        "name": "get",
+                        "params": [
+                            {
+                                "name": "help",
+                                "param_type_name": "option",
+                                "opts": [
+                                    "--help"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "Bool",
+                                    "name": "boolean"
+                                },
+                                "required": false,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": false,
+                                "envvar": null,
+                                "help": "Show this message and exit.",
+                                "prompt": null,
+                                "is_flag": true,
+                                "flag_value": true,
+                                "count": false,
+                                "hidden": false
+                            }
+                        ],
+                        "help": "Get RGBW for Sections ",
+                        "epilog": null,
+                        "short_help": null,
+                        "hidden": false,
+                        "deprecated": false
+                    },
+                    "off": {
+                        "name": "off",
+                        "params": [
+                            {
+                                "name": "help",
+                                "param_type_name": "option",
+                                "opts": [
+                                    "--help"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "Bool",
+                                    "name": "boolean"
+                                },
+                                "required": false,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": false,
+                                "envvar": null,
+                                "help": "Show this message and exit.",
+                                "prompt": null,
+                                "is_flag": true,
+                                "flag_value": true,
+                                "count": false,
+                                "hidden": false
+                            }
+                        ],
+                        "help": "RGBW Off ",
+                        "epilog": null,
+                        "short_help": null,
+                        "hidden": false,
+                        "deprecated": false
+                    },
+                    "on": {
+                        "name": "on",
+                        "params": [
+                            {
+                                "name": "help",
+                                "param_type_name": "option",
+                                "opts": [
+                                    "--help"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "Bool",
+                                    "name": "boolean"
+                                },
+                                "required": false,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": false,
+                                "envvar": null,
+                                "help": "Show this message and exit.",
+                                "prompt": null,
+                                "is_flag": true,
+                                "flag_value": true,
+                                "count": false,
+                                "hidden": false
+                            }
+                        ],
+                        "help": "RGBW On ",
+                        "epilog": null,
+                        "short_help": null,
+                        "hidden": false,
+                        "deprecated": false
+                    },
+                    "set": {
+                        "name": "set",
+                        "params": [
+                            {
+                                "name": "ww",
+                                "param_type_name": "option",
+                                "opts": [
+                                    "-w",
+                                    "--ww"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "IntRange",
+                                    "name": "integer range",
+                                    "min": 0,
+                                    "max": 100,
+                                    "min_open": false,
+                                    "max_open": false,
+                                    "clamp": false
+                                },
+                                "required": false,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": null,
+                                "envvar": null,
+                                "help": "Set the warm white value from 0 to 100% [default: auto]",
+                                "prompt": null,
+                                "is_flag": false,
+                                "flag_value": true,
+                                "count": false,
+                                "hidden": false
+                            },
+                            {
+                                "name": "r",
+                                "param_type_name": "argument",
+                                "opts": [
+                                    "r"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "IntRange",
+                                    "name": "integer range",
+                                    "min": 0,
+                                    "max": 255,
+                                    "min_open": false,
+                                    "max_open": false,
+                                    "clamp": false
+                                },
+                                "required": true,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": null,
+                                "envvar": null
+                            },
+                            {
+                                "name": "g",
+                                "param_type_name": "argument",
+                                "opts": [
+                                    "g"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "IntRange",
+                                    "name": "integer range",
+                                    "min": 0,
+                                    "max": 255,
+                                    "min_open": false,
+                                    "max_open": false,
+                                    "clamp": false
+                                },
+                                "required": true,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": null,
+                                "envvar": null
+                            },
+                            {
+                                "name": "b",
+                                "param_type_name": "argument",
+                                "opts": [
+                                    "b"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "IntRange",
+                                    "name": "integer range",
+                                    "min": 0,
+                                    "max": 255,
+                                    "min_open": false,
+                                    "max_open": false,
+                                    "clamp": false
+                                },
+                                "required": true,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": null,
+                                "envvar": null
+                            },
+                            {
+                                "name": "help",
+                                "param_type_name": "option",
+                                "opts": [
+                                    "--help"
+                                ],
+                                "secondary_opts": [],
+                                "type": {
+                                    "param_type": "Bool",
+                                    "name": "boolean"
+                                },
+                                "required": false,
+                                "nargs": 1,
+                                "multiple": false,
+                                "default": false,
+                                "envvar": null,
+                                "help": "Show this message and exit.",
+                                "prompt": null,
+                                "is_flag": true,
+                                "flag_value": true,
+                                "count": false,
+                                "hidden": false
+                            }
+                        ],
+                        "help": "Set RGBW for pi (ww auto handling) ",
+                        "epilog": null,
+                        "short_help": null,
+                        "hidden": false,
+                        "deprecated": false
+                    }
+                },
+                "chain": true
+            },
+            "gui": {
+                "name": "gui",
+                "params": [
+                    {
+                        "name": "gui",
+                        "param_type_name": "option",
+                        "opts": [
+                            "-g",
+                            "--gui"
+                        ],
+                        "secondary_opts": [],
+                        "type": {
+                            "param_type": "String",
+                            "name": "text"
+                        },
+                        "required": false,
+                        "nargs": 1,
+                        "multiple": false,
+                        "default": "qt",
+                        "envvar": null,
+                        "help": "change default webview to use (qt, gtk)",
+                        "prompt": null,
+                        "is_flag": false,
+                        "flag_value": false,
+                        "count": false,
+                        "hidden": false
+                    },
+                    {
+                        "name": "help",
+                        "param_type_name": "option",
+                        "opts": [
+                            "--help"
+                        ],
+                        "secondary_opts": [],
+                        "type": {
+                            "param_type": "Bool",
+                            "name": "boolean"
+                        },
+                        "required": false,
+                        "nargs": 1,
+                        "multiple": false,
+                        "default": false,
+                        "envvar": null,
+                        "help": "Show this message and exit.",
+                        "prompt": null,
+                        "is_flag": true,
+                        "flag_value": true,
+                        "count": false,
+                        "hidden": false
+                    }
+                ],
+                "help": "Flask GUI ",
+                "epilog": null,
+                "short_help": null,
+                "hidden": false,
+                "deprecated": false
+            }
+        },
+        "chain": false
+    },
+    "info_name": null,
+    "allow_extra_args": true,
+    "allow_interspersed_args": false,
+    "ignore_unknown_options": false,
+    "auto_envvar_prefix": null
+}
