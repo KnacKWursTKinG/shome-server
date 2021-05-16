@@ -3,8 +3,8 @@ import click
 
 from . import Cache
 from .help import cli_help
-from .pl import cli_pl
-from .smb import cli_smb
+from .pl import pl
+from .smb import smb
 
 
 @click.group()
@@ -20,5 +20,5 @@ def cli(ctx, debug: bool):
 
 
 cli.add_command(cli_help)
-cli.add_command(cli_pl)
-cli.add_command(cli_smb)
+cli.add_command(pl)
+cli.add_command(smb)
