@@ -8,6 +8,7 @@ import click
 import click_aliases  # type: ignore
 
 from smb.SMBConnection import SMBConnection  # type: ignore
+from smb.smb_structs import OperationFailure  # type: ignore
 
 from nmpvc._click import pl
 
@@ -20,7 +21,7 @@ from . import _Cache, _SMB, Cache
               metavar="<server> <share> <username> <password>",
               help="samba credentials")
 @click.pass_context
-def smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]]):
+def smb(ctx: click.Context, path: str, credentials: Optional[tuple[str, str, str, str]]):
     """ Sambe Browser """
     if not ctx.obj:
         ctx.obj = Cache
@@ -43,7 +44,7 @@ def smb(ctx, path: str, credentials: Optional[tuple[str, str, str, str]]):
 @click.pass_obj
 def smb_list(obj: _Cache, path: str):
     """ List/Browse samba share """
-    #obj.logger.name = 'list'
+    obj.logger.name = 'list'
 
     if not isinstance(obj.smb, _SMB):
         raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
@@ -53,12 +54,17 @@ def smb_list(obj: _Cache, path: str):
 
         cli.connect(obj.smb.server, obj.smb.port)
 
-        for _file in cli.listPath(obj.smb.share, f"{obj.smb.path.rstrip('/')}/{path.lstrip('/')}"):
-            # skip hidden files
-            if _file.filename[0] == '.':
-                continue
+        try:
+            for _file in cli.listPath(obj.smb.share, f"{obj.smb.path.rstrip('/')}/{path.lstrip('/')}"):
+                # skip hidden files
+                if _file.filename[0] == '.':
+                    continue
 
-            click.echo(f"{_file.filename}{'/' if _file.isDirectory else ''}")
+                click.echo(f"{_file.filename}{'/' if _file.isDirectory else ''}")
+
+        except OperationFailure as ex:
+            obj.logger.error(ex)
+            sys.exit(1)
 
 
 @smb.group('search', aliases=['s'], invoke_without_command=True)
