@@ -14,4 +14,4 @@ python nmpvc --debug \
     --echo \
     --exit \
   on-success \
-    --echo-return
+    --echo \

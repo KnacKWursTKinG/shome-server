@@ -11,7 +11,7 @@ from nmpvc.base import MPV
 @dataclass
 class _PL:
     mpv: Optional[MPV] = None
-    td: list[ThreadData] = field(default_factory=list)
+    td: list[(str, ThreadData)] = field(default_factory=list)
 
 
 @dataclass

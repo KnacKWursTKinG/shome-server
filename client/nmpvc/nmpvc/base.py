@@ -38,7 +38,7 @@ class MPV:
     def _send(self, addr: tuple[str, int], data: Any):
         resp = requests.post(
             self._url(addr),
-            json.loads(data),
+            json.dumps(data),
             headers={
                 'Content-Type': 'application/json'
             }
@@ -57,7 +57,7 @@ class MPV:
         return self._send(
             addr,
             {
-                "sync": ...,  # @todo
+                #"sync": ...,  # @todo
                 "attr": str(name),
                 "args": args,
                 "kwargs": kwargs
@@ -69,7 +69,7 @@ class MPV:
         return self._send(
             addr,
             {
-                "sync": ...,  # @todo
+                #"sync": ...,  # @todo
                 "attr": str(prop),
                 "value": value
             }
@@ -80,7 +80,7 @@ class MPV:
         return self._send(
             addr,
             {
-                "sync": ...,  # @todo
+                #"sync": ...,  # @todo
                 "attr": str(prop)
             }
         )

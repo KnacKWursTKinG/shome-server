@@ -37,8 +37,8 @@ def index():
                         )
 
                     else:
-                        if req_data.get('args'):
-                            player.setattr(req_data['attr'], req_data['args'][0])
+                        if 'value' in req_data:
+                            player.setattr(req_data['attr'], req_data['value'])
                         else:
                             ret_data = _attr
 

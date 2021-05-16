@@ -26,12 +26,10 @@ def smb(ctx: click.Context, path: str, credentials: Optional[tuple[str, str, str
     if not ctx.obj:
         ctx.obj = Cache
 
-    ctx.obj.logger.name = 'smb'
-
     if not credentials:
         # @todo: load config credentials
         credentials = ('...', '...', '...', '...')
-        ctx.obj.logger.critical("SMB Credentials Missing!")
+        ctx.obj.logger.critical("SMB Credentials Missing!", 'smb')
         sys.exit(1)
 
     ctx.obj.smb = _SMB(
@@ -44,8 +42,6 @@ def smb(ctx: click.Context, path: str, credentials: Optional[tuple[str, str, str
 @click.pass_obj
 def smb_list(obj: _Cache, path: str):
     """ List/Browse samba share """
-    obj.logger.name = 'list'
-
     if not isinstance(obj.smb, _SMB):
         raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
 
@@ -63,7 +59,7 @@ def smb_list(obj: _Cache, path: str):
                 click.echo(f"{_file.filename}{'/' if _file.isDirectory else ''}")
 
         except OperationFailure as ex:
-            obj.logger.error(ex)
+            obj.logger.error(ex, 'smb list')
             sys.exit(1)
 
 
@@ -74,8 +70,6 @@ def smb_list(obj: _Cache, path: str):
 @click.pass_obj
 def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
     """ Search samba server for file(s) (python regex support) """
-    #obj.logger.name = 'search'
-
     if not isinstance(obj.smb, _SMB):
         raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
 
@@ -93,16 +87,21 @@ def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
 
         cli.connect(obj.smb.server, obj.smb.port)
 
-        # search in path for matching files
-        for _file in cli.listPath(obj.smb.share, obj.smb.path):
-            # skip hidden files
-            if _file.filename[0] == '.' or _file.isDirectory:
-                continue
+        try:
+            # search in path for matching files
+            for _file in cli.listPath(obj.smb.share, obj.smb.path):
+                # skip hidden files
+                if _file.filename[0] == '.' or _file.isDirectory:
+                    continue
 
-            match = re.match(regex, _file.filename)
+                match = re.match(regex, _file.filename)
 
-            if match:
-                matches.append(_file)
+                if match:
+                    matches.append(_file)
+
+        except OperationFailure as ex:
+            obj.logger.error(ex, 'smb search')
+            sys.exit(1)
 
     if sort == 'name':
         # sort

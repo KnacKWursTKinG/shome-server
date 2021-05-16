@@ -1,6 +1,7 @@
 
 import socket
 import sys
+import pprint
 
 import click
 
@@ -10,43 +11,49 @@ from . import _Cache, _SMB, Cache
 
 
 @click.command('on-success')
+@click.option('--echo', is_flag=True, default=False, help="print server return")
 @click.pass_obj
-def on_success(obj: _Cache):
+def on_success(obj: _Cache, **kwargs):
     """ @todo ... """
     to_delete = list()
 
-    for td in obj.pl.td:
-        try:
-            ret = td.join()
-            to_delete.append(td)
+    obj.logger.debug(f"{pprint.pformat(obj.pl.td)}", name='on-success')
 
-            ...
+    for part in obj.pl.td:
+        for server, data in part:
+            if not isinstance(data, Exception):
+                to_delete.append(part)
 
-        except Exception as ex:
-            continue
+                if kwargs['echo'] and data is not None:
+                    obj.logger.info(f"{pprint.pformat(data)}", name=server)
 
-
-    for td in to_delete:
-        obj.pl.td.remove(td)
+    for part in to_delete:
+        obj.pl.td.remove(part)
 
 
 @click.command('on-error')
+@click.option('--echo', is_flag=True, default=False, help="print exception")
+@click.option('--exit', is_flag=True, default=False, help="exit if error")
 @click.pass_obj
-def on_error(obj: _Cache):
+def on_error(obj: _Cache, **kwargs):
     """ @todo ... """
     to_delete = list()
 
-    for td in obj.pl.td:
-        try:
-            td.join()
-            continue
+    obj.logger.debug(f"{pprint.pformat(obj.pl.td)}", name='on-error')
 
-        except Exception as ex:
-            to_delete.append(td)
-            ...
+    for part in obj.pl.td:
+        for server, data in part:
+            if isinstance(data, Exception):
+                to_delete.append(part)
 
-    for td in to_delete:
-        obj.pl.td.remove(td)
+                if kwargs['echo']:
+                    obj.logger.error(f"{data!r}", name=server)
+
+                if kwargs['exit']:
+                    sys.exit(1)
+
+    for part in to_delete:
+        obj.pl.td.remove(part)
 
 
 @click.group('append', invoke_without_command=True, chain=True)
@@ -57,8 +64,6 @@ def on_error(obj: _Cache):
 @click.pass_obj
 def smb_append(obj: _Cache, server: tuple[str], port: int):
     """ Append/Add new file """
-    obj.logger.name = 'append'
-
     if not isinstance(obj.smb, _SMB):
         raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
 
@@ -66,20 +71,13 @@ def smb_append(obj: _Cache, server: tuple[str], port: int):
         try:
             obj.pl.mpv = MPV(*[(_host, port) for _host in server])
         except socket.gaierror as ex:
-            obj.logger.error(f"{ex}")
+            obj.logger.error(f"{ex}", 'smb append')
             sys.exit(1)
 
     while (file := obj.smb.files.pop(0) if obj.smb.files else None):
         obj.pl.td.append(
             obj.pl.mpv.run('playlist_append', file)
         )
-
-        # @todo: remove (on-error command used instead)
-        #for _host, _data in obj.pl.mpv.run('playlist_append', file):
-        #    if isinstance(_data, Exception):
-        #        obj.logger.name = _host
-        #        obj.logger.error(f"{_data!r}")
-        #        sys.exit(1)
 
 
 smb_append.add_command(on_success)
@@ -97,10 +95,8 @@ def pl(ctx, server: tuple[str], port: int):
     if not ctx.obj:
         ctx.obj = Cache
 
-    ctx.obj.logger.name = 'pl'
-
     try:
         ctx.obj.pl.mpv = MPV(*[(_host, port) for _host in server])
     except socket.gaierror as ex:
-        ctx.obj.logger.error(f"{ex}")
+        ctx.obj.logger.error(f"{ex}", 'pl')
         sys.exit(1)

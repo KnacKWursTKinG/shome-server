@@ -41,6 +41,14 @@ class Player:
     def ts(self, value: Optional[float]):
         self.__ts = float(value) if value is not None else None
 
+    @property
+    def mpv(self):
+        if Player.MPV is None:
+            # @todo: add default flags
+            self.new()
+
+        return Player.MPV
+
     def __enter__(self):
         self.wait_for_sync()
 
@@ -100,10 +108,10 @@ class Player:
         if name in self._custom:
             return self._custom[name]
 
-        return getattr(Player.MPV, name)
+        return getattr(self.mpv, name)
 
     def setattr(self, name: str, value: Any):
-        setattr(Player.MPV, name, value)
+        setattr(self.mpv, name, value)
 
     def runattr(self, attr: Callable, *args, **kwargs):
         return attr(*args, **kwargs)
