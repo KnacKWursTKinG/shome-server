@@ -1,9 +1,13 @@
 
 import socket
+import json
 import sys
-import pprint
 
 import click
+
+from pygments import highlight  # type: ignore
+from pygments.lexers import JsonLexer  # type: ignore
+from pygments.formatters import TerminalFormatter  # type: ignore
 
 from nmpvc.base import MPV
 from nmpvc._click._thread import on_success, on_error
@@ -69,7 +73,12 @@ def pl_list(obj: _Cache):
             _error = True
 
         elif data is not None:
-            obj.logger.info(f"\n{pprint.pformat(data)}", name=server)
+            message = highlight(
+                json.dumps(data, indent=2),
+                JsonLexer(), TerminalFormatter()
+            )
+            obj.logger.info(f"\n{message}", name=server)
+
 
     if _error:
         sys.exit(1)
@@ -91,7 +100,6 @@ def pl_append(obj: _Cache, file: str):
         sys.exit(1)
 
 
-# @todo: continue here ...
 @pl.command('remove')
 @click.option('-i', '--index', type=int,
               help="remove from playlist [default: 'current']")
@@ -136,6 +144,49 @@ def pl_pause(obj: _Cache, state: bool):
         if isinstance(data, Exception):
             obj.logger.error(f"{data!r}", name=server)
             _error = True
+
+    if _error:
+        sys.exit(1)
+
+
+@pl.command('time-pos')
+@click.pass_obj
+def pl_time_pos(obj: _Cache):
+    """ pause true/false """
+    _error = False
+
+    for server, data in obj.pl.mpv.get('time_pos'):
+        if isinstance(data, Exception):
+            obj.logger.error(f"{data!r}", name=server)
+            _error = True
+
+        elif data is not None:
+            obj.logger.info(f"{data!r}", name=server)
+
+    if _error:
+        sys.exit(1)
+
+
+@pl.command('seek')
+@click.option('-i', '--increase', is_flag=True, default=False, help="seek forward")
+@click.option('-d', '--decrease', is_flag=True, default=False, help="seek backwards")
+@click.argument('value', type=float)
+@click.pass_obj
+def pl_seek(obj: _Cache, increase: bool, decrease: bool, value: float):
+    """ pause true/false """
+    _error = False
+
+    if increase or decrease:
+        for server, data in obj.pl.mpv.run('seek', f"{'+' if increase else '-'}{value}"):
+            if isinstance(data, Exception):
+                obj.logger.error(f"{data!r}", name=server)
+                _error = True
+
+    else:
+        for server, data in obj.pl.mpv.set('time_pos', value):
+            if isinstance(data, Exception):
+                obj.logger.error(f"{data!r}", name=server)
+                _error = True
 
     if _error:
         sys.exit(1)
