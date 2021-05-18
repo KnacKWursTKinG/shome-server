@@ -10,8 +10,8 @@ from nmpvc.base import MPV
 
 @dataclass
 class _PL:
-    mpv: Optional[MPV] = None
-    td: list[(str, ThreadData)] = field(default_factory=list)
+    mpv: MPV = None  # type: ignore
+    td: list[list[tuple[str, ThreadData]]] = field(default_factory=list)
 
 
 @dataclass

@@ -57,7 +57,7 @@ class MPV:
         return self._send(
             addr,
             {
-                #"sync": ...,  # @todo
+                #"sync": ...,  # @todo: add sync
                 "attr": str(name),
                 "args": args,
                 "kwargs": kwargs
@@ -69,7 +69,7 @@ class MPV:
         return self._send(
             addr,
             {
-                #"sync": ...,  # @todo
+                #"sync": ...,  # @todo: add sync
                 "attr": str(prop),
                 "value": value
             }
@@ -80,7 +80,7 @@ class MPV:
         return self._send(
             addr,
             {
-                #"sync": ...,  # @todo
+                #"sync": ...,  # @todo: add sync
                 "attr": str(prop)
             }
         )
