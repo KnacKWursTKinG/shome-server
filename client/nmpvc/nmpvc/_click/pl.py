@@ -62,8 +62,9 @@ def pl(ctx, server: tuple[str], port: int):
 
 
 @pl.command('list')
+@click.option('-l', '--length', is_flag=True, default=False, help="only print list length")
 @click.pass_obj
-def pl_list(obj: _Cache):
+def pl_list(obj: _Cache, length: bool):
     """ show playlist """
     _error = False
 
@@ -73,11 +74,16 @@ def pl_list(obj: _Cache):
             _error = True
 
         elif data is not None:
-            message = highlight(
-                json.dumps(data, indent=2),
-                JsonLexer(), TerminalFormatter()
-            )
-            obj.logger.info(f"\n{message}", name=server)
+            if length:
+                obj.logger.info(f"{len(data)}", name=server)
+
+            else:
+                message = highlight(
+                    json.dumps(data, indent=2),
+                    JsonLexer(), TerminalFormatter()
+                )
+
+                obj.logger.info(f"\n{message}", name=server)
 
 
     if _error:
@@ -118,16 +124,27 @@ def pl_remove(obj: _Cache, index):
 
 
 @pl.command('pos')
-@click.argument('position', type=int)
+@click.option('-i', '--index', type=int, default=None, show_default=True,
+              help="change playlist position")
 @click.pass_obj
-def pl_pos(obj: _Cache, position: int):
+def pl_pos(obj: _Cache, index: int):
     """ current playlist position """
     _error = False
 
-    for server, data in obj.pl.mpv.set('playlist_pos', position):
-        if isinstance(data, Exception):
-            obj.logger.error(f"{data!r}", name=server)
-            _error = True
+    if index:
+        for server, data in obj.pl.mpv.set('playlist_pos', index):
+            if isinstance(data, Exception):
+                obj.logger.error(f"{data!r}", name=server)
+                _error = True
+
+    else:
+        for server, data in obj.pl.mpv.get('playlist_pos'):
+            if isinstance(data, Exception):
+                obj.logger.error(f"{data!r}", name=server)
+                _error = True
+
+            elif data is not None:
+                obj.logger.info(f"{data!r}", name=server)
 
     if _error:
         sys.exit(1)
