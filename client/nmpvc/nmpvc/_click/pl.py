@@ -10,37 +10,8 @@ from pygments.lexers import JsonLexer  # type: ignore
 from pygments.formatters import TerminalFormatter  # type: ignore
 
 from nmpvc.base import MPV
-from nmpvc._click._thread import on_success, on_error
 
 from . import _Cache, _SMB, Cache
-
-
-@click.group('append', invoke_without_command=True, chain=True)
-@click.option('-s', '--server', metavar="<server>", multiple=True,
-              help="shomeserver host [multiple: True]")
-@click.option('-p', '--port', metavar="<port>", type=int, default=50870, show_default=True,
-              help="shomeserver port")
-@click.pass_obj
-def smb_append(obj: _Cache, server: tuple[str], port: int):
-    """ Append/Add new file """
-    if not isinstance(obj.smb, _SMB):
-        raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
-
-    if not isinstance(obj.pl.mpv, MPV):
-        try:
-            obj.pl.mpv = MPV(*[(_host, port) for _host in server])
-        except socket.gaierror as ex:
-            obj.logger.error(f"{ex}", 'smb append')
-            sys.exit(1)
-
-    while (file := obj.smb.files.pop(0) if obj.smb.files else None):
-        obj.pl.td.append(
-            obj.pl.mpv.run('playlist_append', file)
-        )
-
-
-smb_append.add_command(on_success)
-smb_append.add_command(on_error)
 
 
 @click.group('pl', chain=True)
@@ -54,11 +25,12 @@ def pl(ctx, server: tuple[str], port: int):
     if not ctx.obj:
         ctx.obj = Cache
 
-    try:
-        ctx.obj.pl.mpv = MPV(*[(_host, port) for _host in server])
-    except socket.gaierror as ex:
-        ctx.obj.logger.error(f"{ex}", 'pl')
-        sys.exit(1)
+    if not isinstance(ctx.obj.pl.mpv, MPV):
+        try:
+            ctx.obj.pl.mpv = MPV(*[(_host, port) for _host in server])
+        except socket.gaierror as ex:
+            ctx.obj.logger.error(f"{ex}", 'pl')
+            sys.exit(1)
 
 
 @pl.command('list')
