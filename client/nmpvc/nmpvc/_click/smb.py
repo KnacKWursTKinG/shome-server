@@ -1,6 +1,7 @@
 
 import re
 import sys
+import socket
 
 from typing import Optional
 
@@ -10,7 +11,7 @@ import click_aliases  # type: ignore
 from smb.SMBConnection import SMBConnection  # type: ignore
 from smb.smb_structs import OperationFailure  # type: ignore
 
-from nmpvc._click import pl
+from nmpvc.base import MPV
 from nmpvc._click._thread import on_success
 
 from . import _Cache, _SMB, Cache
@@ -140,7 +141,7 @@ def smb_append(obj: _Cache, server: tuple[str], port: int):
     if not isinstance(obj.smb, _SMB):
         raise TypeError(f"expect {type(_SMB)} for 'obj.smb', got {type(obj.smb)}")
 
-    if not isinstance(obj.pl.mpv, MPV):
+    if not isinstance(obj.pl.mpv, MPV) or server:
         try:
             obj.pl.mpv = MPV(*[(_host, port) for _host in server])
         except socket.gaierror as ex:

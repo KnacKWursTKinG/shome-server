@@ -11,7 +11,7 @@ from pygments.formatters import TerminalFormatter  # type: ignore
 
 from nmpvc.base import MPV
 
-from . import _Cache, _SMB, Cache
+from . import _Cache, Cache
 
 
 @click.group('pl', chain=True)
@@ -25,7 +25,7 @@ def pl(ctx, server: tuple[str], port: int):
     if not ctx.obj:
         ctx.obj = Cache
 
-    if not isinstance(ctx.obj.pl.mpv, MPV):
+    if not isinstance(ctx.obj.pl.mpv, MPV) or server:
         try:
             ctx.obj.pl.mpv = MPV(*[(_host, port) for _host in server])
         except socket.gaierror as ex:
