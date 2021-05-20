@@ -9,7 +9,7 @@ from pygments import highlight  # type: ignore
 from pygments.lexers import JsonLexer  # type: ignore
 from pygments.formatters import TerminalFormatter  # type: ignore
 
-from nmpvc.base import MPV
+from nmpv_client.base import MPV
 
 from . import _Cache, Cache
 

@@ -4,9 +4,7 @@ import pprint
 
 import click
 
-from nmpvc._click import pl
-
-from . import _Cache
+from . import _Cache, pl
 
 
 @click.group('on-success')

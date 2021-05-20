@@ -11,10 +11,9 @@ import click_aliases  # type: ignore
 from smb.SMBConnection import SMBConnection  # type: ignore
 from smb.smb_structs import OperationFailure  # type: ignore
 
-from nmpvc.base import MPV
-from nmpvc._click._thread import on_success
+from nmpv_client.base import MPV
 
-from . import _Cache, _SMB, Cache
+from . import _Cache, _SMB, Cache, _thread
 
 
 @click.group('smb', cls=click_aliases.ClickAliasedGroup)
@@ -154,4 +153,4 @@ def smb_append(obj: _Cache, server: tuple[str], port: int):
         )
 
 
-smb_append.add_command(on_success)
+smb_append.add_command(_thread.on_success)

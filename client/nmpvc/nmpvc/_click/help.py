@@ -1,9 +1,10 @@
 
-import dill as pickle
 import pprint
 
+import dill as pickle  # type: ignore
+
 import click
-import click_aliases
+import click_aliases  # type: ignore
 
 
 @click.group('help', cls=click_aliases.ClickAliasedGroup)

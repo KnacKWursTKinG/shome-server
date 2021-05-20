@@ -5,7 +5,7 @@ from typing import Optional
 from kwking_helper.logging import CL  # type: ignore
 from kwking_helper.thread import ThreadData  # type: ignore
 
-from nmpvc.base import MPV
+from nmpv_client.base import MPV
 
 
 @dataclass
