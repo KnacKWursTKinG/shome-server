@@ -64,6 +64,7 @@ def smb_list(obj: _Cache, path: str):
             sys.exit(1)
 
 
+# @todo: add option '--url' or '--echo-url': print full samba url
 @smb.group('search', aliases=['s'], invoke_without_command=True)
 @click.option('-s', '--sort', type=click.Choice(['write', 'name', 'lazy']), help="sort files")
 @click.option('-m', '--max-matches', type=int, help="max number for matches")
@@ -129,7 +130,7 @@ def smb_search(obj: _Cache, file: str, max_matches: int, sort: Optional[str]):
     return _add(obj, [f.filename for f in matches])
 
 
-@click.group('append', invoke_without_command=True)
+@smb_search.group('append', invoke_without_command=True)
 @click.option('-s', '--server', metavar="<server>", multiple=True,
               help="shomeserver host [multiple: True]")
 @click.option('-p', '--port', metavar="<port>", type=int, default=50870, show_default=True,
