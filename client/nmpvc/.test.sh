@@ -10,8 +10,7 @@ python nmpvc --debug \
     '.*' \
   append \
     --server localhost \
-  on-error \
-    --echo \
-    --exit \
   on-success \
     --echo \
+    --exit \
+  pl list

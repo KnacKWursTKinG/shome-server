@@ -3,17 +3,17 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="nmpv_ctrl",
+    name="nmpv_client",
     description="control nmpv shomeserver plugin",
 
     packages=find_packages(),
-    #include_package_data=True,
+    include_package_data=True,
 
-    #entry_points={
-    #    'console_scripts': [
-    #        'pirgb = pirgb._click:cli'
-    #    ]
-    #},
+    entry_points={
+        'console_scripts': [
+            'nmpvc = nmpvc._click.nmpv:cli'
+        ]
+    },
 
     #data_files=[
     #    ('share/applications', ['pirgb.desktop']),
@@ -23,7 +23,7 @@ setup(
     install_requires=[
         'requests',
         'dill',
-        'pysmb'
+        'pysmb',
         'click',
         'click-aliases',
         'flask',
