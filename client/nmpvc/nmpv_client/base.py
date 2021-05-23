@@ -1,8 +1,9 @@
 
 import json
 import socket
+import time
 
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 import requests
 
@@ -11,7 +12,7 @@ from kwking_helper.thread import threaded2, ThreadData  # type: ignore
 
 
 class MPV:
-    def __init__(self, *addr: Union[str, tuple[str, int]], sync: bool = True):
+    def __init__(self, *addr: Union[str, tuple[str, int]], sync: bool = False):
         self._port = 50870
         self.sync = bool(sync)
         self.addr = list(addr)  # type: ignore
@@ -53,37 +54,34 @@ class MPV:
         return None
 
     @threaded2(daemon=True)
-    def _run(self, addr: tuple[str, int], name: str, *args, **kwargs):
-        return self._send(
-            addr,
-            {
-                #"sync": ...,  # @todo: add sync
-                "attr": str(name),
-                "args": args,
-                "kwargs": kwargs
-            }
-        )
+    def _run(self, sync: Optional[float], addr: tuple[str, int], name: str, *args, **kwargs):
+        data = {
+            "sync": sync,
+            "attr": str(name),
+            "args": args,
+            "kwargs": kwargs
+        }
+
+        return self._send(addr, data)
 
     @threaded2(daemon=True)
-    def _set(self, addr: tuple[str, int], prop: str, value: Any):
-        return self._send(
-            addr,
-            {
-                #"sync": ...,  # @todo: add sync
-                "attr": str(prop),
-                "value": value
-            }
-        )
+    def _set(self, sync: Optional[float], addr: tuple[str, int], prop: str, value: Any):
+        data = {
+            "sync": sync,
+            "attr": str(prop),
+            "value": value
+        }
+
+        return self._send(addr, data)
 
     @threaded2(daemon=True)
-    def _get(self, addr: tuple[str, int], prop: str):
-        return self._send(
-            addr,
-            {
-                #"sync": ...,  # @todo: add sync
-                "attr": str(prop)
-            }
-        )
+    def _get(self, sync: Optional[float], addr: tuple[str, int], prop: str):
+        data = {
+            "sync": sync,
+            "attr": str(prop)
+        }
+
+        return self._send(addr, data)
 
     def _threads(self, threads: list[tuple[str, ThreadData]]) -> list[tuple[str, Any]]:
         ret = list()
@@ -98,16 +96,22 @@ class MPV:
         return ret
 
     def run(self, name: str, *args, **kwargs) -> list[tuple[str, Any]]:
+        sync = time.time() + 1 if self.sync else None
+
         return self._threads(
-            [(f"{addr[0]}:{addr[1]}", self._run(addr, name, *args, **kwargs)) for addr in self.addr]
+            [(f"{addr[0]}:{addr[1]}", self._run(sync, addr, name, *args, **kwargs)) for addr in self.addr]
         )
 
     def set(self, name: str, value: Any) -> list[tuple[str, Any]]:
+        sync = time.time() + 1 if self.sync else None
+
         return self._threads(
-            [(f"{addr[0]}:{addr[1]}", self._set(addr, name, value)) for addr in self.addr]
+            [(f"{addr[0]}:{addr[1]}", self._set(sync, addr, name, value)) for addr in self.addr]
         )
 
     def get(self, name: str) -> list[tuple[str, Any]]:
+        sync = time.time() + 1 if self.sync else None
+
         return self._threads(
-            [(f"{addr[0]}:{addr[1]}", self._get(addr, name)) for addr in self.addr]
+            [(f"{addr[0]}:{addr[1]}", self._get(sync, addr, name)) for addr in self.addr]
         )
