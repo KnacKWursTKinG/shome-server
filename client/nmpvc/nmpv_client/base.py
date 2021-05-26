@@ -11,6 +11,7 @@ from kwking_helper import rq  # type: ignore
 from kwking_helper.thread import threaded2, ThreadData  # type: ignore
 
 
+# @todo: enable/disable sync, set delay (ts) value
 class MPV:
     def __init__(self, *addr: Union[str, tuple[str, int]], sync: bool = False):
         self._port = 50870

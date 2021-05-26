@@ -122,6 +122,7 @@ def pl_pos(obj: _Cache, index: int):
         sys.exit(1)
 
 
+# @todo: option: change default sync value (ts)
 @pl.command('pause')
 @click.argument('state', type=click.BOOL)
 @click.pass_obj
