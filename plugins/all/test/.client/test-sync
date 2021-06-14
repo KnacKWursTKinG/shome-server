@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import json
+import socket
 import time
 import threading
 
@@ -64,8 +65,8 @@ def sync(host: tuple[str, ...], port: int, delay: float):
 
     @threaded2(False, t_success, t_error)
     def __thread(host: str, timestamp: float):
-        with THREAD_LOCK:
-            click.echo(f"[{host}:{port}] [delay: {delay}] {timestamp=}", err=True)
+        #with THREAD_LOCK:
+        #    click.echo(f"[{host}:{port}] [delay: {delay}] {timestamp=}", err=True)
 
         r = requests.get(
             f"http://{host}:{port}/api/test/sync",
@@ -78,7 +79,7 @@ def sync(host: tuple[str, ...], port: int, delay: float):
         raise Exception(r)
 
     for _host in list(host):
-        __thread(_host, ts)
+        __thread(socket.gethostbyname(_host), ts)
 
 
 if __name__ == "__main__":
