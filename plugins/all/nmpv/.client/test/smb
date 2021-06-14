@@ -2,11 +2,22 @@
 """ search samba share for stuff to play """
 
 import sys
+import re
+
+from typing import Optional
 
 import click
 
+from smb.SMBConnection import SMBConnection  # type: ignore
+from smb.smb_structs import OperationFailure  # type: ignore
 
-@click.group()
+
+# @todo: add change path command
+# @todo: add ls command
+# @todo: add recursive search
+
+
+@click.group(chain=True)
 @click.option('-p', '--path', default='/', show_default=True,
               help="change root path")
 @click.option('-c', '--credentials', nargs=4, metavar="<server> <share> <username> <password>",
@@ -14,16 +25,97 @@ import click
 @click.pass_context
 def cli(ctx: click.Context, path: str, credentials: tuple[str, str, str, str]):
     """ search samba share for media files """
-    click.echo(credentials, err=True)
-
     if not credentials:
         click.echo("ERROR: SMB Credentials Missing!", err=True)
         sys.exit(1)
 
+    def _build_url(credentials, path, file):
+        return "smb://{username}:{password}@{server}/{share}/{path}".format(
+            **credentials,
+            path=f"{path}/{file.lstrip('/')}".lstrip('/')
+        )
+
     ctx.obj = {
         'path': path,
-        'credentials': credentials
+        'credentials': {
+            'server': credentials[0],
+            'share': credentials[1],
+            'username': credentials[2],
+            'password': credentials[3]
+        }
     }
+
+    ctx.obj['smb'] = {
+        'url': lambda _file: _build_url(ctx.obj['credentials'], ctx.obj['path'], _file),
+        'match': []
+    }
+
+
+@cli.command('search')
+@click.option('-s', '--sort', type=click.Choice(['write', 'name', 'lazy']), help="sort files")
+@click.option('-m', '--max-matches', type=int, help="max number for matches")
+@click.argument('file')
+@click.pass_obj
+def smb_search(obj: dict, file: str, max_matches: int, sort: Optional[str]):
+    """ Search samba server for file(s) (python regex support) """
+    regex = re.compile(file)
+    matches: list = list()
+
+    with SMBConnection(obj['credentials']['username'], obj['credentials']['password'],
+                       obj['credentials']['server'], obj['credentials']['server']) as client:
+        client.connect(obj['credentials']['server'], 139)
+
+        try:
+            # search in path for matching files
+            for _file in client.listPath(obj['credentials']['share'], obj['path']):
+                # skip hidden files
+                if _file.filename[0] == '.' or _file.isDirectory:
+                    continue
+
+                match = re.match(regex, _file.filename)
+
+                if match:
+                    matches.append(_file)
+
+        except OperationFailure as ex:
+            click.echo(f"ERROR: {ex}", err=True)
+            sys.exit(1)
+
+    if sort == 'name':
+        # sort
+        matches = [f.filename for f in matches]
+        matches.sort()
+
+        for _file in matches[:max_matches]:
+            obj['smb']['match'].append(obj['smb']['url'](_file))
+
+        return
+
+    if sort == 'write':
+        # sort
+        _matches: list = list()
+
+        for _match in matches:
+            for idx, _sorted_match in enumerate(_matches):
+                if _match.last_write_time > _sorted_match.last_write_time:
+                    _matches.insert(idx, _match)
+                    break
+            else:
+                _matches.append(_match)
+
+        matches = _matches
+        del _matches
+
+    for _file in matches[:max_matches]:
+        obj['smb']['match'].append(obj['smb']['url'](_file.filename))
+
+
+@cli.command('show')
+@click.pass_obj
+def cli_show(obj: dict):
+    """ print out results """
+    for match in obj['smb']['match']:
+        click.echo(match)
 
 
 cli()
