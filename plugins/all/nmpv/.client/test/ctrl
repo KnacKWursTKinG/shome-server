@@ -2,17 +2,23 @@
 """ NMPVC Playlist control """
 
 import socket
+import time
+import json
+import sys
 
 from typing import Callable
 
 import click
+import requests
 
-from kwking_helper.thread import threaded2, ThreadData
+from kwking_helper.thread import threaded2  # type: ignore
+from kwking_helper import rq   # type: ignore
 
 
 class MPV:
     def __init__(self, *addr):
         self.addr = addr
+        self.sync_delay = 0.5
 
     @property
     def addr(self):
@@ -26,32 +32,82 @@ class MPV:
     def url(self):
         return "http://{}:{}/api/nmpv/player"
 
-    def run(self, name: str, args: tuple, kwargs: dict,
+    def _send(self, host, port, data):
+        resp = requests.post(
+            self.url.format(host, port),
+            json.dumps(data),
+            headers={
+                'Content-Type': 'application/json'
+            }
+        )
+
+        if resp.status_code != 200:
+            raise rq.RQError(resp)
+
+        if "application/json" in resp.headers.get('Content-Type', ''):
+            return json.loads(resp.text)
+
+        return None
+
+    def run(self, name: str, args: tuple, kwargs: dict, sync: bool = False,
             on_success: Callable = None, on_error: Callable = None):
 
         @threaded2(True, on_success, on_error)
-        def run(name, *args, **kwargs):
-            ...
+        def _run(host, port, sync, name, *args, **kwargs):
+            return self._send(
+                host, port,
+                {
+                    "sync": sync,
+                    "attr": str(name),
+                    "args": args,
+                    "kwargs": kwargs
+                }
+            )
 
-        ...
+        if sync:
+            _sync = time.time() + self.sync_delay
 
-    def get(self, name,
-            on_success: Callable, on_error: Callable):
+        for host, port in self.addr:
+            _run(host, port, sync or None, name, *args, **kwargs)
+
+    def get(self, name, sync: bool = False,
+            on_success: Callable = None, on_error: Callable = None):
 
         @threaded2(True, on_success, on_error)
-        def get(name):
-            ...
+        def _get(host, port, sync, name):
+            return self._send(
+                host, port,
+                {
+                    "sync": sync,
+                    "attr": str(name)
+                }
+            )
 
-        ...
+        if sync:
+            _sync = time.time() + self.sync_delay
 
-    def set(self, name, value,
-            on_success: Callable, on_error: Callable):
+        for host, port in self.addr:
+            _get(host, port, sync or None, name)
+
+    def set(self, name, value, sync: bool = False,
+            on_success: Callable = None, on_error: Callable = None):
 
         @threaded2(True, on_success, on_error)
-        def set(name, value):
-            ...
+        def _set(host, port, sync, name, value):
+            return self._send(
+                host, port,
+                {
+                    "sync": sync,
+                    "attr": str(name),
+                    "value": value
+                }
+            )
 
-        ...
+        if sync:
+            _sync = time.time() + self.sync_delay
+
+        for host, port in self.addr:
+            _set(host, port, _sync or None, name, value)
 
 
 @click.group(invoke_without_command=True)
@@ -60,15 +116,22 @@ class MPV:
 @click.option('--default-port', type=int, metavar="<port>", default=50870,
               help="change default speaker port")
 @click.pass_context
-def cli(ctx: click.Context, addr: tuple[str, ...], default_port: int, debug: bool):
+def cli(ctx: click.Context, addr: tuple[str, ...], default_port: int):
     """ Player Control (Playlist handling) """
-    parsed = list()
+    parsed: list[tuple[str, int]] = list()
 
     for idx in range(len(addr)):
         if ':' in addr[idx]:
-            parsed.append(tuple(addr[idx].rsplit(':', 1)))
+            host, _port = addr[idx].rsplit(':', 1)
+            port = int(_port)
         else:
-            parsed.append(tuple(addr[idx], default_port))
+            host, port = (str(addr[idx]), int(default_port))
+
+        try:
+            parsed.append((socket.gethostbyname(host), port))
+        except socket.gaierror as ex:
+            click.echo(f"ERROR: {host}: {ex}", err=True)
+            sys.exit(1)
 
     ctx.obj = MPV(*parsed)
 
