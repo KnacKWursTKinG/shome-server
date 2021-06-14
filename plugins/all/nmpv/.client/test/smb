@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+""" search samba share for stuff to play """
+
+import sys
+
+import click
+
+
+@click.group()
+@click.option('-p', '--path', default='/', show_default=True,
+              help="change root path")
+@click.option('-c', '--credentials', nargs=4, metavar="<server> <share> <username> <password>",
+              help="samba credentials")
+@click.pass_context
+def cli(ctx: click.Context, path: str, credentials: tuple[str, str, str, str]):
+    """ search samba share for media files """
+    click.echo(credentials, err=True)
+
+    if not credentials:
+        click.echo("ERROR: SMB Credentials Missing!", err=True)
+        sys.exit(1)
+
+    ctx.obj = {
+        'path': path,
+        'credentials': credentials
+    }
+
+
+cli()
