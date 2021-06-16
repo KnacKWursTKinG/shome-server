@@ -118,4 +118,5 @@ def cli_show(obj: dict):
         click.echo(match)
 
 
-cli()
+if __name__ == "__main__":
+    cli()
