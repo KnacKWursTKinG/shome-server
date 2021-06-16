@@ -4,7 +4,7 @@
   },
   "shomeserver": {
     "port": 50870,
-    "log_level": "debug",
+    "log_level": "info",
     "log_file": "~/.logs/shomeserver.log",
     "plugin_path": "~/.config/shomeserver/plugins"
   },
@@ -20,6 +20,12 @@
   },
   "plugin@nmpv": {
     "log_level": "${shomeserver:log_level}",
-    "log_file": "~/.logs/shomeserver.nmpv.log"
+    "mpv_log_level": "info",
+    "log_file": "~/.logs/shomeserver.nmpv.log",
+    "defaults": {
+      "pi-bed": {
+        "fullscreen": true
+      }
+    }
   }
 }

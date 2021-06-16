@@ -28,8 +28,7 @@ class Player:
         }
 
         self._logger = CL(
-            c.main.get('plugin@nmpv', 'log_level'),
-            name='MPV: Player',
+            c.main.get('plugin@nmpv', 'log_level'), name='MPV: Player',
             _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
         )
 
@@ -57,6 +56,7 @@ class Player:
     def __exit__(self, *args):
         pass
 
+    # @todo: add default flags from config
     def new(self, *flags, **kwargs):
         if isinstance(Player.MPV, mpv.MPV):
             self.logger('info', 'new', 'exit existing player instance')
@@ -64,7 +64,12 @@ class Player:
 
         Player.MPV = mpv.MPV(
             *flags,
-            log_handler=self.logger, loglevel='debug',
+            log_handler=self.logger,
+            loglevel=c.main.get(
+                'plugin@nmpv',
+                'mpv_log_level',
+                fallback=c.main.get('plugin@nmpv', 'log_level')
+            ),
             **kwargs
         )
 

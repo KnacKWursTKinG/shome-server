@@ -10,4 +10,9 @@ if sh.which('nmpvc') is None:
     sys.exit(1)
 
 
-print(sh.nmpvc())
+print(sh.nmpvc.smb(*(
+    '--credentials rpi-server MyNAS alarm nincompoop '
+    '--path /videos/music/ '
+    "search -m 2 -s write '.*' "
+    'append --server pi-bed'
+).split()))

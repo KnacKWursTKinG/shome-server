@@ -40,7 +40,7 @@ class _Cache:
     pl = _PL()
     smb: Optional[_SMB] = None
     help = None
-    _cl = CL('warning', __name__)
+    _cl = CL('info', __name__)
 
     @property
     def logger(self):

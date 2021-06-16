@@ -8,8 +8,15 @@ from flask import Blueprint, request, Response
 
 from nmpv.player import Player
 
+from kwking_helper.config import c
+from kwking_helper.logging import CL
+
 
 blueprint = Blueprint('MPV', __name__)
+logger = CL(
+    c.main.get('plugin@nmpv', 'log_level'), 'nmpv',
+    _file=c.main.get('plugin@nmpv', 'log_file', fallback=None)
+)
 
 
 @blueprint.route('/player', methods=['POST'])
@@ -20,6 +27,8 @@ def index():
     if 'application/json' in request.headers.get('Content-Type'):
         req_data = request.get_json()
         # req_data == { 'attr': str, 'args': list[Any], 'kwargs': dict[str, Any] }
+
+        logger.debug(f"{req_data=}")
 
         if isinstance(req_data, dict):
             if 'attr' not in req_data:
