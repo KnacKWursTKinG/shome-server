@@ -14,6 +14,9 @@ from nmpv_client.base import MPV
 from . import _Cache, Cache
 
 
+# @todo: add commands for set/get property
+
+
 @click.group('pl', chain=True)
 @click.option('-s', '--server', metavar="<server>", multiple=True,
               help="shomeserver host [multiple: True]")
