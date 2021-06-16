@@ -11,11 +11,10 @@ from kwking_helper import rq  # type: ignore
 from kwking_helper.thread import threaded2, ThreadData  # type: ignore
 
 
-# @todo: enable/disable sync, set delay (ts) value
 class MPV:
-    def __init__(self, *addr: Union[str, tuple[str, int]], sync: bool = False):
+    def __init__(self, *addr: Union[str, tuple[str, int]]):
         self._port = 50870
-        self.sync = bool(sync)
+        self.sync_delay = 0.5
         self.addr = list(addr)  # type: ignore
 
     @property
@@ -96,22 +95,22 @@ class MPV:
 
         return ret
 
-    def run(self, name: str, *args, **kwargs) -> list[tuple[str, Any]]:
-        sync = time.time() + 1 if self.sync else None
+    def run(self, name: str, *args, _sync: bool = False, **kwargs) -> list[tuple[str, Any]]:
+        sync = time.time() + 1 if _sync else None
 
         return self._threads(
             [(f"{addr[0]}:{addr[1]}", self._run(sync, addr, name, *args, **kwargs)) for addr in self.addr]
         )
 
-    def set(self, name: str, value: Any) -> list[tuple[str, Any]]:
-        sync = time.time() + 1 if self.sync else None
+    def set(self, name: str, value: Any, _sync: bool = False) -> list[tuple[str, Any]]:
+        sync = time.time() + 1 if _sync else None
 
         return self._threads(
             [(f"{addr[0]}:{addr[1]}", self._set(sync, addr, name, value)) for addr in self.addr]
         )
 
-    def get(self, name: str) -> list[tuple[str, Any]]:
-        sync = time.time() + 1 if self.sync else None
+    def get(self, name: str, _sync: bool = False) -> list[tuple[str, Any]]:
+        sync = time.time() + 1 if _sync else None
 
         return self._threads(
             [(f"{addr[0]}:{addr[1]}", self._get(sync, addr, name)) for addr in self.addr]

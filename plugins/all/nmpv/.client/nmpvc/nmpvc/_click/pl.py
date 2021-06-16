@@ -122,15 +122,15 @@ def pl_pos(obj: _Cache, index: int):
         sys.exit(1)
 
 
-# @todo: option: change default sync value (ts)
 @pl.command('pause')
+@click.option('--sync', is_flag=True, default=False, help="enable sync")
 @click.argument('state', type=click.BOOL)
 @click.pass_obj
-def pl_pause(obj: _Cache, state: bool):
+def pl_pause(obj: _Cache, sync: bool, state: bool):
     """ pause true/false """
     _error = False
 
-    for server, data in obj.pl.mpv.set('pause', state):
+    for server, data in obj.pl.mpv.set('pause', state, _sync=sync):
         if isinstance(data, Exception):
             obj.logger.error(f"{data!r}", name=server)
             _error = True
