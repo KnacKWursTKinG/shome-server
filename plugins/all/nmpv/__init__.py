@@ -20,10 +20,9 @@ except requests.exceptions.ConnectionError as ex:
     raise PluginError(f"{ex!r}")
 
 if 'data/bytes' in r.headers.get('Content-Type') and r:
-    print(f"{r.text!r}")
     c.read_dict(json.loads(r.text), namespace='nmpv')
 else:
-    PluginError(f"{r!r}, {r.text}")
+    raise PluginError(f"{r!r}, {r.text}")
 
 from .route import api_blueprint
 

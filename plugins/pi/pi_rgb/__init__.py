@@ -21,7 +21,7 @@ except requests.exceptions.ConnectionError as ex:
 if 'data/bytes' in r.headers.get('Content-Type') and r:
     c.read_dict(json.loads(r.text), namespace='pi_rgb')
 else:
-    PluginError(f"{r!r}, {r.text}")
+    raise PluginError(f"{r!r}, {r.text}")
 
 if socket.gethostname() not in c.pi_rgb.sections():
     raise PluginError(f"no config for {socket.gethostname()}")
