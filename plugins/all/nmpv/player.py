@@ -66,6 +66,8 @@ class Player:
             self.logger('info', 'new', 'exit existing player instance')
             self.quit()
 
+        self._logger.debug(f"{flags=}, {DEFAULTS=}, {kwargs=}")
+
         Player.MPV = mpv.MPV(
             *flags,
             log_handler=self.logger,
