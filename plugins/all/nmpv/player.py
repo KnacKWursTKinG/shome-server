@@ -13,6 +13,7 @@ from kwking_helper.config import c  # type: ignore
 from kwking_helper.logging import CL  # type: ignore
 
 
+print(c.main.get('plugin@nmpv', 'defaults', fallback="{}"))
 DEFAULTS = json.loads(
     c.main.get('plugin@nmpv', 'defaults', fallback="{}")
 ).get(socket.gethostname(), {})
