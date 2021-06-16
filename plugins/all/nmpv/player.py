@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import time
+import json
+import socket
 
 from typing import Optional, Any, Callable
 
@@ -9,6 +11,11 @@ import mpv  # type: ignore
 
 from kwking_helper.config import c  # type: ignore
 from kwking_helper.logging import CL  # type: ignore
+
+
+DEFAULTS = json.loads(
+    c.main.get('plugin@nmpv', 'defaults', fallback="{}")
+).get(socket.gethostname(), {})
 
 
 class SyncError(Exception):
@@ -70,7 +77,7 @@ class Player:
                 'mpv_log_level',
                 fallback=c.main.get('plugin@nmpv', 'log_level')
             ),
-            **kwargs
+            **{**DEFAULTS, **kwargs}
         )
 
     def quit(self):
