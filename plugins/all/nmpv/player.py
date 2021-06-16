@@ -13,10 +13,7 @@ from kwking_helper.config import c  # type: ignore
 from kwking_helper.logging import CL  # type: ignore
 
 
-print(c.main.get('plugin@nmpv', 'defaults', fallback="{}"))
-DEFAULTS = json.loads(
-    c.main.get('plugin@nmpv', 'defaults', fallback="{}")
-).get(socket.gethostname(), {})
+DEFAULTS = c.dict('nmpv').get(socket.gethostname(), {})
 
 
 class SyncError(Exception):
@@ -64,7 +61,6 @@ class Player:
     def __exit__(self, *args):
         pass
 
-    # @todo: add default flags from config
     def new(self, *flags, **kwargs):
         if isinstance(Player.MPV, mpv.MPV):
             self.logger('info', 'new', 'exit existing player instance')

@@ -21,11 +21,6 @@
   "plugin@nmpv": {
     "log_level": "${shomeserver:log_level}",
     "mpv_log_level": "info",
-    "log_file": "~/.logs/shomeserver.nmpv.log",
-    "defaults": {
-      "pi-bed": {
-        "fullscreen": true
-      }
-    }
+    "log_file": "~/.logs/shomeserver.nmpv.log"
   }
 }
