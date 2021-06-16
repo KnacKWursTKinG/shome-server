@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import time
-import json
 import socket
 
 from typing import Optional, Any, Callable
