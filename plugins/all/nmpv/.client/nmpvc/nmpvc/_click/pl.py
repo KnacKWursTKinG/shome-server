@@ -183,3 +183,48 @@ def pl_seek(obj: _Cache, increase: bool, decrease: bool, value: float):
 
     if _error:
         sys.exit(1)
+
+
+@pl.command('prop')
+@click.option('-s', '--set', '_set', help="Set a property")
+@click.option('--sync', is_flag=True, default=False, help="enable sync")
+@click.argument('prop')
+@click.pass_obj
+def pl_prop(obj: _Cache, prop: str, _set: str, sync: bool):
+    """ Get or set a mpv property """
+    obj.logger.debug(f"{prop=}, {_set=}", name="pl_prop")
+
+    if _set:
+        server_return = obj.pl.mpv.set(prop, _set, _sync=sync)
+    else:
+        server_return = obj.pl.mpv.get(prop, _sync=sync)
+
+    _err = False
+    for server, ret in server_return:
+        if isinstance(ret, Exception):
+            obj.logger.error(f"{ret!r}", name=server)
+            _err = True
+        else:
+            obj.logger.info("\n{}".format(
+                highlight(
+                    json.dumps(ret, indent=2),
+                    JsonLexer(), TerminalFormatter()
+                )
+            ), name=f"property: {server}")
+
+    if _err:
+        sys.exit(1)
+
+
+@pl.command('quit')
+@click.pass_obj
+def pl_cmd(obj: _Cache):
+    """ run mpv command """
+    _err = False
+    for server, ret in obj.pl.mpv.run('quit'):
+        if isinstance(ret, Exception):
+            obj.logger.error(f"{ret!r}", name=server)
+            _err = True
+
+    if _err:
+        sys.exit(1)
