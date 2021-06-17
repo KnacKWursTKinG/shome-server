@@ -1,5 +1,11 @@
 {
   "pi-bed": {
     "fullscreen": "yes"
+  },
+  "pi-lr": {
+    "fullscreen": "yes"
+  },
+  "pi-kitchen": {
+    "fullscreen": "yes"
   }
 }
