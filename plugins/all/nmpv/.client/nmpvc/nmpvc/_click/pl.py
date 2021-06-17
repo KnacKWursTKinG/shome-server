@@ -101,19 +101,20 @@ def pl_remove(obj: _Cache, index):
 @pl.command('pos')
 @click.option('-i', '--index', type=int, default=None, show_default=True,
               help="change playlist position")
+@click.option('--sync', is_flag=True, default=False, help="enable sync")
 @click.pass_obj
-def pl_pos(obj: _Cache, index: int):
+def pl_pos(obj: _Cache, index: int, sync: bool):
     """ current playlist position """
     _error = False
 
-    if index:
-        for server, data in obj.pl.mpv.set('playlist_pos', index):
+    if index is not None:
+        for server, data in obj.pl.mpv.set('playlist_pos', index, _sync=sync):
             if isinstance(data, Exception):
                 obj.logger.error(f"{data!r}", name=server)
                 _error = True
 
     else:
-        for server, data in obj.pl.mpv.get('playlist_pos'):
+        for server, data in obj.pl.mpv.get('playlist_pos', _sync=sync):
             if isinstance(data, Exception):
                 obj.logger.error(f"{data!r}", name=server)
                 _error = True
@@ -143,12 +144,13 @@ def pl_pause(obj: _Cache, sync: bool, state: bool):
 
 
 @pl.command('time-pos')
+@click.option('--sync', is_flag=True, default=False, help="enable sync")
 @click.pass_obj
-def pl_time_pos(obj: _Cache):
+def pl_time_pos(obj: _Cache, sync: bool):
     """ get time-pos prop """
     _error = False
 
-    for server, data in obj.pl.mpv.get('time_pos'):
+    for server, data in obj.pl.mpv.get('time_pos', _sync=sync):
         if isinstance(data, Exception):
             obj.logger.error(f"{data!r}", name=server)
             _error = True
@@ -163,20 +165,21 @@ def pl_time_pos(obj: _Cache):
 @pl.command('seek')
 @click.option('-i', '--increase', is_flag=True, default=False, help="seek forward")
 @click.option('-d', '--decrease', is_flag=True, default=False, help="seek backwards")
+@click.option('--sync', is_flag=True, default=False, help="enable sync")
 @click.argument('value', type=float)
 @click.pass_obj
-def pl_seek(obj: _Cache, increase: bool, decrease: bool, value: float):
+def pl_seek(obj: _Cache, increase: bool, decrease: bool, sync: bool, value: float):
     """ seek position """
     _error = False
 
     if increase or decrease:
-        for server, data in obj.pl.mpv.run('seek', f"{'+' if increase else '-'}{value}"):
+        for server, data in obj.pl.mpv.run('seek', f"{'+' if increase else '-'}{value}", _sync=sync):
             if isinstance(data, Exception):
                 obj.logger.error(f"{data!r}", name=server)
                 _error = True
 
     else:
-        for server, data in obj.pl.mpv.set('time_pos', value):
+        for server, data in obj.pl.mpv.set('time_pos', value, _sync=sync):
             if isinstance(data, Exception):
                 obj.logger.error(f"{data!r}", name=server)
                 _error = True
