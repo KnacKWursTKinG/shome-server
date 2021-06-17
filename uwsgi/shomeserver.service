@@ -1,0 +1,9 @@
+[Unit]
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/uwsgi --ini /home/alarm/shomeserver.ini
+
+[Install]
+WantedBy=default.target
