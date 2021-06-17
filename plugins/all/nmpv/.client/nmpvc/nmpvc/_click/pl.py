@@ -145,7 +145,7 @@ def pl_pause(obj: _Cache, sync: bool, state: bool):
 @pl.command('time-pos')
 @click.pass_obj
 def pl_time_pos(obj: _Cache):
-    """ pause true/false """
+    """ get time-pos prop """
     _error = False
 
     for server, data in obj.pl.mpv.get('time_pos'):
@@ -166,7 +166,7 @@ def pl_time_pos(obj: _Cache):
 @click.argument('value', type=float)
 @click.pass_obj
 def pl_seek(obj: _Cache, increase: bool, decrease: bool, value: float):
-    """ pause true/false """
+    """ seek position """
     _error = False
 
     if increase or decrease:
