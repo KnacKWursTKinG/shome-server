@@ -24,19 +24,51 @@ POST  | /api/pi\_rgb/off | turn off __*sections*__            | __*sections*__  
 > '*https://github.com/jaseg/python-mpv*'
 
 
-* Client -> Server:  (Out-of-Date)
-  * **Type**: pickle/bytes
-  * __*mpv_data*__: `tuple["mpv.MPV attribute name", Optional["args"], Optional["kwargs"]]`
+### Client -> Server:
+#### **Type**: application/json
+#### __*mpv_data*__: 
+
+> run method
+
+```json
+{
+  "sync": null,
+  "attr": "new",
+  "args": [],
+  "kwargs": {
+    "ytdl": true
+  }
+}
+```
+
+> set property
+
+```json
+{
+  "sync": null,
+  "attr": "new",
+  "value": "..."
+}
+```
+
+> get property
+
+```json
+{
+  "sync": null,
+  "attr": "new"
+}
+```
 
 
-* Server -> Client:  (Out-of-Date)
-  * **Type**: pickle/bytes
-  * __*return*__: `Any`
+### Server -> Client:
+#### **Type**: application/json
+#### __*return*__: json method/property return or error message
 
 
  Type | Route | Description | Client | Server
 :----:|:------|:-----------:|:-------|:------
-POST  | /api/mrav/ | python-mpv control | __*mpv_data*__ | __*return*__
+POST  | /api/nmpv/player | python-mpv control | __*mpv_data*__ | __*return*__
 
 
 ### Examples
