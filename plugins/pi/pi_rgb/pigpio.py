@@ -9,9 +9,9 @@ from typing import Union
 
 import pigpio
 
-from kwking_helper.config import c
-from kwking_helper.logging import CL
-from kwking_helper.thread import threaded2  # @todo: ...
+from helper.config import c
+from helper.logging import CL
+from helper.thread import threaded2  # @todo: ...
 
 
 class Cache:
@@ -34,10 +34,11 @@ class Cache:
 
         if cls.rgbw(section) != rgbw or not cls.last_rgbw.get(str(section)):
             cls.logger.debug(f"[cache] upload {rgbw=} to dbserver")
-            r = c.db.put(
-                cls.group, f"{socket.gethostname()}.{section}",
+            r = c.db.post(
+                '/label',
                 data=json.dumps(rgbw).encode(),
-                _auto_post=True
+                name=f"{socket.gethostname()}.{section}",
+                group=cls.group
             )
 
             if not r:
@@ -52,7 +53,7 @@ class Cache:
 
         if not cls.last_rgbw.get(str(section)):
             cls.logger.debug("[rgbw] download rgbw from dbserver")
-            r = c.db.get(cls.group, f"{socket.gethostname()}.{section}")
+            r = c.db.get('/label', name=f"{socket.gethostname()}.{section}", group=cls.group)
 
             if not r:
                 cls.logger.error(f"[rgbw] {r!r}, {r.text}")

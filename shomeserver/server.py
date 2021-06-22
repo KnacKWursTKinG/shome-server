@@ -4,8 +4,8 @@ import sys
 
 from flask import Flask, Blueprint
 
-from kwking_helper.config import c
-from kwking_helper.logging import CL
+from helper.config import c
+from helper.logging import CL
 
 from shomeserver import PluginError
 from shomeserver.route.base import base_blueprint, api_base_blueprint

@@ -4,7 +4,7 @@ import socket
 
 import requests
 
-from kwking_helper.config import c
+from helper.config import c
 
 from shomeserver import PluginError
 
@@ -13,11 +13,11 @@ if 'plugin@pi_pir_motion' not in c.main.sections():
     c.read(__file__.rsplit('/', 1)[0] + '/config.ini')
 
 try:
-    r = c.db.get('config', 'pi_pir_motion')
+    r = c.db.get('/label', name='pi_pir_motion', group='config')
 except requests.exceptions.ConnectionError as ex:
     raise PluginError(f"{ex!r}")
 
-if 'data/bytes' in r.headers.get('Content-Type') and r:
+if 'json' in r.headers.get('Content-Type') and r:
     c.read_dict(json.loads(r.text), namespace='pi_pir_motion')
 else:
     c.read_dict({}, namespace='pi_pir_motion')

@@ -2,8 +2,8 @@
 import json
 import os
 
-from kwking_helper import rq
-from kwking_helper.config import c
+from helper import rq
+from helper.config import c
 
 
 class PluginError(Exception):
@@ -18,12 +18,11 @@ c.read([
 
 # load config from dbserver if available (store in c.main)
 c.db = rq.DBServer(
-    c.main.get('dbserver', 'credentials'),
     c.main.get('dbserver', 'host'),
     c.main.getint('dbserver', 'port')
 )
 
-r = c.db.get('config', 'shomeserver')
+r = c.db.get('/label', name="shomeserver", group="config")
 
 if r:
     c.read_dict(json.loads(r.text))

@@ -8,8 +8,8 @@ from typing import Optional, Any, Callable
 
 import mpv  # type: ignore
 
-from kwking_helper.config import c  # type: ignore
-from kwking_helper.logging import CL  # type: ignore
+from helper.config import c  # type: ignore
+from helper.logging import CL  # type: ignore
 
 
 DEFAULTS = c.dict('nmpv').get(socket.gethostname(), {})

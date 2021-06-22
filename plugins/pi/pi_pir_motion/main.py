@@ -5,10 +5,10 @@ import time
 
 from multiprocessing import Process
 
-from kwking_helper.config import c
-from kwking_helper.logging import CL
+from helper.config import c
+from helper.logging import CL
 
-from kwking_helper.thread import threaded2, ThreadData
+from helper.thread import threaded2, ThreadData
 
 
 HOSTNAME = socket.gethostname()

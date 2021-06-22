@@ -3,8 +3,8 @@ import os
 
 from flask import Blueprint, request, make_response, jsonify
 
-from kwking_helper.config import c
-from kwking_helper.logging import CL
+from helper.config import c
+from helper.logging import CL
 
 from pi_rgb.pigpio import PigpioHandler
 

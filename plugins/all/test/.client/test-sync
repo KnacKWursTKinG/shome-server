@@ -10,7 +10,7 @@ import requests
 
 from click_aliases import ClickAliasedGroup
 
-from kwking_helper.thread import threaded2, ThreadData
+from helper.thread import threaded2, ThreadData
 
 
 THREAD_LOCK = threading.Lock()

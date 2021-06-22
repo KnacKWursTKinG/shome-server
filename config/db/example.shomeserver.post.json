@@ -1,6 +1,6 @@
 {
   "dbserver": {
-    "port": 50860
+    "port": 50861
   },
   "shomeserver": {
     "port": 50870,
