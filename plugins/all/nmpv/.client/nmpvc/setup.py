@@ -26,8 +26,7 @@ setup(
         'pysmb',
         'click',
         'click-aliases',
-        'flask',
-        'kwking_helper @ git+https://github.com/KnacKWursTKinG/helper@main'
+        'flask'
     ],
 
     version="0.0.1",
