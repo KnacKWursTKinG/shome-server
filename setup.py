@@ -11,8 +11,7 @@ setup(
 
     install_requires=[
         'flask',
-        'click',
-        'kwking_helper @ git+https://github.com/KnacKWursTKinG/helper@main'
+        'click'
     ],
 
     version="0.1.0",
