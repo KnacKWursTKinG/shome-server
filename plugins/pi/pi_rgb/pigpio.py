@@ -36,7 +36,7 @@ class Cache:
             cls.logger.debug(f"[cache] upload {rgbw=} to dbserver")
             r = c.db.post(
                 '/label',
-                data=json.dumps(rgbw).encode(),
+                data=json.dumps(rgbw),
                 name=f"{socket.gethostname()}.{section}",
                 group=cls.group
             )
