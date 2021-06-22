@@ -24,12 +24,12 @@ POST  | /api/pi\_rgb/off | turn off __*sections*__            | __*sections*__  
 > '*https://github.com/jaseg/python-mpv*'
 
 
-* Client -> Server:
+* Client -> Server:  (Out-of-Date)
   * **Type**: pickle/bytes
   * __*mpv_data*__: `tuple["mpv.MPV attribute name", Optional["args"], Optional["kwargs"]]`
 
 
-* Server -> Client:
+* Server -> Client:  (Out-of-Date)
   * **Type**: pickle/bytes
   * __*return*__: `Any`
 
