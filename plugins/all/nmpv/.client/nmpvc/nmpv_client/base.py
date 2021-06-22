@@ -7,8 +7,8 @@ from typing import Any, Union, Optional
 
 import requests
 
-from kwking_helper import rq  # type: ignore
-from kwking_helper.thread import threaded2, ThreadData  # type: ignore
+from helper import rq  # type: ignore
+from helper.thread import threaded2, ThreadData  # type: ignore
 
 
 class MPV:

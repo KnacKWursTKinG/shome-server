@@ -2,8 +2,8 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from kwking_helper.logging import CL  # type: ignore
-from kwking_helper.thread import ThreadData  # type: ignore
+from helper.logging import CL  # type: ignore
+from helper.thread import ThreadData  # type: ignore
 
 from nmpv_client.base import MPV
 

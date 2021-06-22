@@ -1,9 +1,7 @@
 
-from typing import Union, Optional
-
 import requests
 
-from .base import RQBase, RQError
+from .base import RQBase
 
 
 class DBServerError(Exception):
@@ -24,7 +22,7 @@ class DBServer(RQBase):
 
     def post(self, path, data: str, **params) -> requests.Response:
 
-        assert isinstance(data, str), f"data have to be a json string"
+        assert isinstance(data, str), "data have to be a json string"
 
         headers = {**self.headers, **{'Content-Type': 'application/json'}}
 
