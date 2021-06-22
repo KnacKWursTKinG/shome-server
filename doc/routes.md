@@ -18,7 +18,7 @@ POST  | /api/pi\_rgb/on  | turn on __*sections*__             | __*sections*__  
 POST  | /api/pi\_rgb/off | turn off __*sections*__            | __*sections*__              | -
 
 
-## MRAV: *'~/.config/plugins/nmpv'*
+## NMPV: *'~/.config/plugins/nmpv'*
 
 > MPV-Player Network Control plugin<br/>
 > '*https://github.com/jaseg/python-mpv*'
